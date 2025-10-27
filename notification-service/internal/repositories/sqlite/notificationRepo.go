@@ -26,7 +26,7 @@ func NewNotificationRepo(db *sql.DB) *NotificationRepo {
 }
 
 //createnotif saves a new notification to the db
-func (r *NotificationRepo) createNotification(ctx context.Context, notifcation *models.Notification) error {
+func (r *NotificationRepo) CreateNotification(ctx context.Context, notifcation *models.Notification) error {
 	query := `
 		INSERT INTO notifications
 		(id, to_email, subject, body, status, type, retry_count, creates_at, sent_at, error)
@@ -52,9 +52,7 @@ func (r *NotificationRepo) createNotification(ctx context.Context, notifcation *
 
 //methods
 //getnotification by id
-func (r *NotificationRepo) GetNotificationById(id string) (*models.Notification, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+func (r *NotificationRepo) GetNotificationById(ctx context.Context, id string) (*models.Notification, error) {
 
 	query := `
 		SELECT id, to_email, subject, body, status, types, retry_count, created_at, sent_at, error 
@@ -88,4 +86,66 @@ func (r *NotificationRepo) GetNotificationById(id string) (*models.Notification,
 		notification.SentAt = &sentAt.Time
 	}
 	return &notification, nil
+}
+
+//update notification status
+func (r *NotificationRepo) UpdateNotificationStatus(ctx context.Context, id string, status string) error {
+
+	query := `UPDATE notification SET status = ? WHERE id = ?`
+	results, err := r.db.ExecContext(ctx, query, status, id)
+	if err != nil {
+		return fmt.Errorf("failed to update notification status: %w", err)
+	}
+
+	rowsAffected, err := results.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affect: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return repositories.ErrNotificationNotFound
+	}
+	return nil
+}
+
+//update notification sent to updates the notifs with sent timestamp and status
+func (r *NotificationRepo) UpdateNotificationSent(ctx context.Context, id string, sentAt time.Time) error {
+	
+	query := `UPDATE notifications SET Status = ?, sent_at =?, retry_count = retry_count + 1 WHERE id= ?`
+
+	results, err := r.db.ExecContext(ctx, query, models.StatusSent, sentAt, id)
+	if err != nil {
+		return fmt.Errorf("failed to update notification as sent: %w", err)
+	}
+
+	rowsAffected, err := results.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affect: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return repositories.ErrNotificationNotFound
+	}
+	return nil
+}
+
+//update notification failed updates notifs with error info
+func ( r *NotificationRepo) UpdateNotificationFailed(ctx context.Context, id string, errorMsg string) error {
+
+	query := `UPDATE notifications SET status = ?, error = ?, retry_count = retry_count + 1 WHERE id = ?`
+
+	results, err := r.db.ExecContext(ctx, query, models.StatusFailed, errorMsg, id)
+	if err != nil {
+		return fmt.Errorf("failed to update notification as failed: %w", err)
+	}
+
+	rowsAffected, err := results.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affect: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return repositories.ErrNotificationNotFound
+	}
+	return nil
 }

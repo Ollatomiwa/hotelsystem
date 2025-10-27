@@ -11,7 +11,7 @@ import (
 
 //notificationrepository defines the contract for notification data operations
 type NotificationRepository interface {
-	CreatNotification (ctx context.Context, notification *models.Notification) error
+	CreateNotification (ctx context.Context, notification *models.Notification) error
 	GetNotificationById (ctx context.Context, id string) (*models.Notification, error)
 	UpdateNotificationStatus (ctx context.Context, id string, status string) error
 	UpdateNotificationSent (ctx context.Context, id string, sentAt time.Time) error
