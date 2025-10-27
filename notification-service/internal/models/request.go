@@ -29,4 +29,5 @@ type HealthResponse struct {
 	Service string `json:"service"`
 	TimeStamp string `json:"timestamp"`
 }
+ type Template struct {}
 
