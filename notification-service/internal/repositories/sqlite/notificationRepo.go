@@ -26,21 +26,34 @@ func NewNotificationRepo(db *sql.DB) *NotificationRepo {
 }
 
 //createnotif saves a new notification to the db
-func (r *NotificationRepo) CreateNotification(ctx context.Context, notifcation *models.Notification) error {
+func (r *NotificationRepo) CreateNotification(ctx context.Context, notification *models.Notification) error {
 	query := `
 		INSERT INTO notifications
 		(id, to_email, subject, body, status, type, retry_count, sent_at, error)
 		VALUES (?,?,?,?,?,?,?,?,?)
 	`
-	_, err := r.db.ExecContext(ctx, query, notifcation.Id,notifcation.To,
-	notifcation.Subject,
-	notifcation.Body,
-	notifcation.Status,
-	notifcation.Status,
-	notifcation.Type,
-	notifcation.RetryCount,
-	notifcation.SentAt,
-	notifcation.Error,
+	var sentAtStr interface{}
+	if notification.SentAt != nil {
+		sentAtStr = notification.SentAt.Format(time.RFC3339)
+	} else {
+		sentAtStr = nil
+	}
+
+	//ensuring err is nver null
+	errorValue := notification.Error
+	if errorValue == "" {
+		errorValue = ""
+	}
+
+	_, err := r.db.ExecContext(ctx, query, notification.Id,notification.To,
+	notification.Subject,
+	notification.Body,
+	notification.Status,
+	notification.Status,
+	notification.Type,
+	notification.RetryCount,
+	sentAtStr,
+	errorValue,
 	)
 
 	if err != nil {
@@ -61,6 +74,7 @@ func (r *NotificationRepo) GetNotificationById(ctx context.Context, id string) (
 	var notification models.Notification
 	var sentAt sql.NullTime
 	var sentAtStr sql.NullString
+	var errorStr sql.NullString
 
 	err := r.db.QueryRowContext(ctx, query,id).Scan(
 		&notification.Id,
@@ -71,7 +85,7 @@ func (r *NotificationRepo) GetNotificationById(ctx context.Context, id string) (
 		&notification.Type,
 		&notification.RetryCount,
 		&sentAtStr, //scan as string first
-		&notification.Error,
+		&errorStr, //scan as NUllstring instead of direct string
 	)
 	if err == sql.ErrNoRows{
 		return nil, repositories.ErrNotificationNotFound
@@ -91,7 +105,15 @@ func (r *NotificationRepo) GetNotificationById(ctx context.Context, id string) (
 	} else {
 		notification.SentAt = nil
 	}
+
+	//handling null error filed
+	if errorStr.Valid {
+		notification.Error = errorStr.String
+	} else {
+		notification.Error = ""
+	}
 	return &notification, nil
+
 }
 
 //update notification status
