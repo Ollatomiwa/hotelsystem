@@ -65,7 +65,7 @@ func (r *NotificationRepo) GetNotificationById(ctx context.Context, id string) (
 	err := r.db.QueryRowContext(ctx, query,id).Scan(
 		&notification.Id,
 		&notification.To,
-		notification.Subject,
+		&notification.Subject,
 		&notification.Body,
 		&notification.Status,
 		&notification.Type,
