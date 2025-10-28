@@ -15,7 +15,13 @@ type NotificationHandler struct {
 	notificationService *services.NotificationService
 }
 
-//constructor: sendemail handles post /ap/..
+//constructor: 
+func NewNotificationHandler(notificationService *services.NotificationService) *NotificationHandler {
+	return &NotificationHandler{
+		notificationService: notificationService,
+	}
+}
+// sendemail handles post /ap/..
 func (h *NotificationHandler) SendEmail(c *gin.Context) {
 	var req models.SendEmailRequest
 
