@@ -60,6 +60,7 @@ func (r *NotificationRepo) GetNotificationById(ctx context.Context, id string) (
 	`
 	var notification models.Notification
 	var sentAt sql.NullTime
+	var sentAtStr sql.NullString
 
 	err := r.db.QueryRowContext(ctx, query,id).Scan(
 		&notification.Id,
@@ -69,7 +70,7 @@ func (r *NotificationRepo) GetNotificationById(ctx context.Context, id string) (
 		&notification.Status,
 		&notification.Type,
 		&notification.RetryCount,
-		&sentAt,
+		&sentAtStr, //scan as string first
 		&notification.Error,
 	)
 	if err == sql.ErrNoRows{
@@ -79,9 +80,16 @@ func (r *NotificationRepo) GetNotificationById(ctx context.Context, id string) (
 		return nil, fmt.Errorf("failed to get notification: %w", err)
 	}
 
-	//convert sql.nulltime to *time.time
-	if sentAt.Valid {
-		notification.SentAt = &sentAt.Time
+	//convert sql.nulltime to *time.time if sentat exists
+	if sentAt.Valid && sentAtStr.String != "" {
+		sentTime, err := time.Parse(time.RFC3339, sentAtStr.String)
+		if err != nil {
+			notification.SentAt = nil
+		} else {
+			notification.SentAt = &sentTime
+		}
+	} else {
+		notification.SentAt = nil
 	}
 	return &notification, nil
 }
@@ -111,7 +119,9 @@ func (r *NotificationRepo) UpdateNotificationSent(ctx context.Context, id string
 	
 	query := `UPDATE notifications SET Status = ?, sent_at =?, retry_count = retry_count + 1 WHERE id= ?`
 
-	results, err := r.db.ExecContext(ctx, query, models.StatusSent, sentAt, id)
+	sentAtStr := sentAt.Format(time.RFC3339)
+
+	results, err := r.db.ExecContext(ctx, query, models.StatusSent, sentAtStr, id)
 	if err != nil {
 		return fmt.Errorf("failed to update notification as sent: %w", err)
 	}
