@@ -87,7 +87,7 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 		notifications := api.Group("/notifications")
 		{
 			notifications.POST("/email", notificationHandler.SendEmail)
-			notifications.GET(":id", notificationHandler.GetNotificationStatus)
+			notifications.GET("/:id", notificationHandler.GetNotificationStatus)
 		}
 	}
 	return router, nil
