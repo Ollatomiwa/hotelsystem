@@ -1,26 +1,27 @@
 package main
 
 import (
-	"database/sql"
 	"context"
+	"database/sql"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
 
-    "github.com/ollatomiwa/hotelsystem/notification-service/internal/handlers"
+	"github.com/ollatomiwa/hotelsystem/notification-service/internal/handlers"
 	"github.com/ollatomiwa/hotelsystem/notification-service/internal/repositories/sqlite"
 	"github.com/ollatomiwa/hotelsystem/notification-service/internal/services"
+	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/config"
 )
 
 //initDB initializes sqlited db and creates tables
-func initDB() (*sql.DB, error){
-	db, err := sql.Open("sqlite3", "./notifications.db")
+func initDB(dbPath string) (*sql.DB, error){
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, err 
 	}
@@ -56,9 +57,9 @@ func initDB() (*sql.DB, error){
 
 }
 //setupROUTER to initialize all depencies and set up http routes
-func setupRouter() (*gin.Engine, error) {
+func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 	//initializes db
-	db, err := initDB()
+	db, err := initDB(cfg.DatabasePath)
 	if err != nil {
 		return nil, err 
 	}
@@ -93,18 +94,20 @@ func setupRouter() (*gin.Engine, error) {
 }
 
 func main () {
+	cfg := config.Load()
 	//setup router
-	router, err := setupRouter()
+	router, err := setupRouter(cfg)
 	if err != nil {
 		log.Fatalf("Failed to setup router:%v", err)
 	}
 
 	//creating HTTP server
 	server := &http.Server{
-		Addr: ":8080",
+		Addr: ":" + cfg.ServerPort,
 		Handler: router,
 		ReadTimeout: 15 *time.Second,
 		WriteTimeout: 15 * time.Second,
+		IdleTimeout: 60 *time.Second,
 	}
 
 	go func() {
