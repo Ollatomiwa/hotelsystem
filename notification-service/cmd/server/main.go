@@ -31,7 +31,7 @@ func initDB(dbPath string) (*sql.DB, error){
 		CREATE TABLE IF NOT EXISTS notifications (
 		id TEXT PRIMARY KEY,
 		to_email TEXT NOT NULL,
-		subjext TEXT NOT NULL,
+		subject TEXT NOT NULL,
 		body TEXT NOT NULL,
 		status TEXT NOT NULL,
 		type TEXT NOT NULL,

@@ -15,7 +15,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		ServerPort: getEnv("Server_Port", "8080"),
-		DatabasePath: getEnv("Database_Path", "./notificcations.db"),
+		DatabasePath: getEnv("Database_Path", "./notifications.db"),
 		Environment: getEnv("Environment", "development"),
 		LogLevel: getEnv("Log_Level", "info"),
 	}
