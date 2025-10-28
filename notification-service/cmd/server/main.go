@@ -36,7 +36,6 @@ func initDB(dbPath string) (*sql.DB, error){
 		status TEXT NOT NULL,
 		type TEXT NOT NULL,
 		retry_count INTEGER DEFAULT 0,
-		created_at TEXT NOT NULL,
 		sent_at TEXT NOT NULL,
 		error TEXT DEFAULT ''
 		)

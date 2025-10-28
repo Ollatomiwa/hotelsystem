@@ -28,7 +28,6 @@ type Notification struct {
 	Status string `json:"status"`
 	Type string `json:"type"` //booking confirmation, welcome mail
 	RetryCount int `json:"retry_count"`
-	CreatedAt time.Time `json:"created_at"`
 	SentAt *time.Time `json:"sent_at"`
 	Error string `json:"error"`
 }

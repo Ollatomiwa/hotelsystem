@@ -31,7 +31,6 @@ func (s *NotificationService)SendEmail(ctx context.Context, req *models.SendEmai
 		Status: models.StatusPending,
 		Type:req.Type,
 		RetryCount: 0,
-		CreatedAt: time.Now(),
 		SentAt: nil,
 		Error: "",
 	}

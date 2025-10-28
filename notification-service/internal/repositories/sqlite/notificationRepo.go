@@ -29,8 +29,8 @@ func NewNotificationRepo(db *sql.DB) *NotificationRepo {
 func (r *NotificationRepo) CreateNotification(ctx context.Context, notifcation *models.Notification) error {
 	query := `
 		INSERT INTO notifications
-		(id, to_email, subject, body, status, type, retry_count, created_at, sent_at, error)
-		VALUES (?,?,?,?,?,?,?,?,?,?)
+		(id, to_email, subject, body, status, type, retry_count, sent_at, error)
+		VALUES (?,?,?,?,?,?,?,?,?)
 	`
 	_, err := r.db.ExecContext(ctx, query, notifcation.Id,notifcation.To,
 	notifcation.Subject,
@@ -39,7 +39,6 @@ func (r *NotificationRepo) CreateNotification(ctx context.Context, notifcation *
 	notifcation.Status,
 	notifcation.Type,
 	notifcation.RetryCount,
-	notifcation.CreatedAt,
 	notifcation.SentAt,
 	notifcation.Error,
 	)
@@ -55,7 +54,7 @@ func (r *NotificationRepo) CreateNotification(ctx context.Context, notifcation *
 func (r *NotificationRepo) GetNotificationById(ctx context.Context, id string) (*models.Notification, error) {
 
 	query := `
-		SELECT id, to_email, subject, body, status, type, retry_count, created_at, sent_at, error 
+		SELECT id, to_email, subject, body, status, type, retry_count, sent_at, error 
 		FROM notifications
 		WHERE id = ?
 	`
@@ -70,7 +69,6 @@ func (r *NotificationRepo) GetNotificationById(ctx context.Context, id string) (
 		&notification.Status,
 		&notification.Type,
 		&notification.RetryCount,
-		&notification.CreatedAt,
 		&sentAt,
 		&notification.Error,
 	)
