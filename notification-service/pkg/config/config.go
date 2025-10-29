@@ -10,7 +10,19 @@ type Config struct {
 	DatabasePath string
 	Environment string
 	LogLevel string 
+
+	//email configurations
+	SMTPHost string
+	SMTPPort int
+	SMTPUsername string
+	SMTPPassword string
+	FromeEmail string
+
+	//rate limit configuration
+	RateLimitRequest int
+	RateLimitMinutes int
 }
+
 
 func Load() *Config {
 	return &Config{
@@ -18,6 +30,17 @@ func Load() *Config {
 		DatabasePath: getEnv("Database_Path", "./notifications.db"),
 		Environment: getEnv("Environment", "development"),
 		LogLevel: getEnv("Log_Level", "info"),
+	
+		//email configs with defaults
+		SMTPHost: getEnv("SMTP_HOST", "smtp.gmail.com"),
+		SMTPPort: getEnvInt("SMTP_PORT", 587),
+		SMTPUsername: getEnv("SMTP_USERNAME", ""),
+		SMTPPassword: getEnv("SMTP_PASSWORD", ""),
+		FromeEmail: getEnv("FROM_EMAIL", "noreply@example.com"),
+
+		//rate linit configs
+		RateLimitRequest: getEnvInt("RATE_LIMIT_REQUEST", 5),
+		RateLimitMinutes: getEnvInt("RATE_LIMIT_MINUTES", 1),
 	}
 }
 
