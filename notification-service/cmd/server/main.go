@@ -17,6 +17,9 @@ import (
 	"github.com/ollatomiwa/hotelsystem/notification-service/internal/repositories/sqlite"
 	"github.com/ollatomiwa/hotelsystem/notification-service/internal/services"
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/config"
+	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/email"
+	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/ratelimiter"
+	
 )
 
 //initDB initializes sqlited db and creates tables
@@ -65,8 +68,39 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 
 	//initializes repos
 	notificationRepo := sqlite.NewNotificationRepo(db)
+
+	//initialize email sender
+	emailSender := email.NewSMTPSender(
+		cfg.SMTPHost,
+		cfg.SMTPPort,
+		cfg.SMTPUsername,
+		cfg.SMTPPassword,
+		cfg.FromeEmail,
+	)
+
+	//initialize rate limiter
+	rateLimiter := ratelimiter.NewRateLimiter(
+		cfg.RateLimitRequest,
+		cfg.RateLimitMinutes,
+	)
+
+	//testing email config in development
+	if cfg.Environment == "development" {
+		log.Println("testing SMTP conn..")
+		if err := emailSender.TestConnection(); err != nil {
+			log.Printf("warning: SMTP conn test failed: %v", err)
+			log.Println("emails may not send properly, check your smtp configuration")
+		} else {
+			log.Println("SMTP conn test successful!")
+		}
+	}
+
 	//initializes service
-	notificationService := services.NewNotificationService(notificationRepo)
+	notificationService := services.NewNotificationService(
+		notificationRepo,
+		emailSender,
+		rateLimiter,
+	)
 	//initilizes handlers
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 
@@ -89,6 +123,9 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 			notifications.GET("/:id", notificationHandler.GetNotificationStatus)
 		}
 	}
+
+	log.Printf("rate limiting: %d requests per %d minutes", cfg.RateLimitRequest, cfg.RateLimitMinutes)
+	log.Printf("SMTP configured: %s:%d", cfg.SMTPHost, cfg.SMTPPort)
 	return router, nil
 }
 
