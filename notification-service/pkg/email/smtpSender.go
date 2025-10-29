@@ -3,6 +3,7 @@ package email
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net/smtp"
 )
 
@@ -92,21 +93,38 @@ func (s *SMTPSender) sendWithStartTLS(addr string, auth smtp.Auth, to string, me
 }
 
 //testconn tests smtp conn and auth
+// TestConnection tests the SMTP connection and authentication
 func (s *SMTPSender) TestConnection() error {
-	auth :=smtp.PlainAuth("", s.username, s.password, s.host)
-	addr := fmt.Sprintf("%s:%d", s.host, s.port)
-
-	if s.port == 587 {
-		client, err := smtp.Dial(addr)
-		if err != nil {
-			return err 
-		}
-		defer client.Close()
-		
-		if err = client.StartTLS(&tls.Config{ServerName: s.host}); err != nil {
-			return err 
-		}
-		return client.Auth(auth)
-	}
-	return smtp.SendMail(addr, auth, s.from, []string{s.username}, []byte("Test connection"))
+    // Mask password in logs for security
+    maskedPassword := "***"
+    if len(s.password) > 0 {
+        maskedPassword = "****" + s.password[len(s.password)-4:]
+    }
+    
+    log.Printf("Testing SMTP connection to %s:%d with user: %s", s.host, s.port, s.username)
+    log.Printf("Password: %s", maskedPassword)
+    
+    auth := smtp.PlainAuth("", s.username, s.password, s.host)
+    addr := fmt.Sprintf("%s:%d", s.host, s.port)
+    
+    if s.port == 587 {
+        client, err := smtp.Dial(addr)
+        if err != nil {
+            return fmt.Errorf("failed to dial SMTP server: %w", err)
+        }
+        defer client.Close()
+        
+        if err = client.StartTLS(&tls.Config{ServerName: s.host}); err != nil {
+            return fmt.Errorf("failed to start TLS: %w", err)
+        }
+        
+        if err = client.Auth(auth); err != nil {
+            return fmt.Errorf("authentication failed: %w", err)
+        }
+        
+        return nil
+    }
+    
+    // For port 465
+    return smtp.SendMail(addr, auth, s.from, []string{s.username}, []byte("Test connection"))
 }
