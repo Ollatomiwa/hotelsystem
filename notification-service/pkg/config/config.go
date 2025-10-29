@@ -1,8 +1,11 @@
 package config
 
 import (
+	"log"
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -25,6 +28,11 @@ type Config struct {
 
 
 func Load() *Config {
+	//load env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("Warning: No .env file found, using environment variable only")
+	}
 	return &Config{
 		ServerPort: getEnv("Server_Port", "8080"),
 		DatabasePath: getEnv("Database_Path", "./notifications.db"),
@@ -43,6 +51,7 @@ func Load() *Config {
 		RateLimitMinutes: getEnvInt("RATE_LIMIT_MINUTES", 1),
 	}
 }
+
 
 //helperfunction
 func getEnv(key, defaultValue string) string {
