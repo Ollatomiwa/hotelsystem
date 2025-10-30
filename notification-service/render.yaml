@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: notification-service
+    env: go
+    plan: free
+    buildCommand: go build -o notification-service ./cmd/server
+    startCommand: ./notification-service
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: "*"
