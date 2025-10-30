@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ollatomiwa/hotelsystem/notification-service/internal/services"
 	"github.com/ollatomiwa/hotelsystem/notification-service/internal/models"
-
+	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/security"
 )
 
 //Notificationhandler to handle http requests for notifs
@@ -25,11 +25,26 @@ func NewNotificationHandler(notificationService *services.NotificationService) *
 func (h *NotificationHandler) SendEmail(c *gin.Context) {
 	var req models.SendEmailRequest
 
-	//binding and balidayiong the request
+	//binding and validate the request
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invaid request payload:" + err.Error()})
 		return 
 	}
+
+	//sanitize inputs
+	sanitizedTo, err := security.SanitizeEmail(req.To)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email address" + err.Error()})
+		return
+	}
+	sanitizedSubject := security.SanitizeSubject(req.Subject)
+	sanitizedBody := security.SanitizeBody(req.Body)
+
+	//update requests with sanitized data
+	req.To = sanitizedTo
+	req.Subject = sanitizedSubject
+	req.Body = sanitizedBody
+
 
 	//calling the server
 	ctx := c.Request.Context()

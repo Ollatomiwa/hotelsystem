@@ -19,7 +19,7 @@ import (
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/config"
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/email"
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/ratelimiter"
-	
+	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/middleware"
 )
 
 //initDB initializes sqlited db and creates tables
@@ -104,8 +104,16 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 	//initilizes handlers
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 
-	//setuo gin router
+	//setup gin router
 	router:= gin.Default()
+
+	//add security middleware
+	securityConfig := &middleware.SecurityConfig{
+		MaxBodySize: int(cfg.MaxRequestBodySize),
+		AllowedOrigins: cfg.AllowedOrigins,
+	}
+
+	router.Use(middleware.SecurityMiddleware(securityConfig))
 
 	//add middleware
 	router.Use(gin.Logger())
