@@ -1,0 +1,6 @@
+[deploy]
+builder = "Dockerfile"
+startCommand = "./notification-service"
+
+[build]
+builder = "dockerfile"

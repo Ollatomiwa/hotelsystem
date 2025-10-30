@@ -1,11 +1,11 @@
 package config
 
 import (
-	"log"
+
 	"os"
 	"strconv"
 
-	"github.com/joho/godotenv"
+	
 )
 
 type Config struct {
@@ -35,13 +35,14 @@ type Config struct {
 
 
 func Load() *Config {
-	//load env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Printf("Warning: No .env file found, using environment variable only")
-	}
+	  // Railway provides PORT environment variable
+    serverPort := getEnv("PORT", "8080")
+    if serverPort == "8080" {
+        serverPort = getEnv("SERVER_PORT", "8080")
+    }
+
 	return &Config{
-		ServerPort: getEnv("Server_Port", "8080"),
+		ServerPort: serverPort,
 		DatabasePath: getEnv("Database_Path", "./notifications.db"),
 		Environment: getEnv("Environment", "development"),
 		LogLevel: getEnv("Log_Level", "info"),

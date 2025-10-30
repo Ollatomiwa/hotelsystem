@@ -1,0 +1,9 @@
+.git
+.gitignore
+README.md
+*.db
+notification-service  # binary file
+.env
+.env.local
+Dockerfile.*
+.dockerignore
