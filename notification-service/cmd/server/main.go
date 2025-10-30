@@ -85,8 +85,13 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 	//initialize health checker
 	healthChecker := health.NewHealthChecker()
     healthChecker.RegisterCheck("database", health.DatabaseCheck(db))
+    
+    // FIX: Use the actual configured port, not hardcoded 587
     healthChecker.RegisterCheck("smtp", health.SMTPCheck(
-        cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword,
+        cfg.SMTPHost, 
+        cfg.SMTPPort,  // ← This should be 465 now
+        cfg.SMTPUsername, 
+        cfg.SMTPPassword,
     ))
 
 	//initializes repos

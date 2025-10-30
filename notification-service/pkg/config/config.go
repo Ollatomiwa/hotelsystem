@@ -35,38 +35,36 @@ type Config struct {
 
 
 func Load() *Config {
-	  // Railway provides PORT environment variable
+    // Railway provides PORT environment variable
     serverPort := getEnv("PORT", "8080")
     if serverPort == "8080" {
         serverPort = getEnv("SERVER_PORT", "8080")
     }
 
-	return &Config{
-		ServerPort: serverPort,
-		DatabaseURL: getEnv("Database_URL", ""),
-		Environment: getEnv("Environment", "development"),
-		LogLevel: getEnv("Log_Level", "info"),
-	
-		//email configs with defaults
-		SMTPHost: getEnv("SMTP_HOST", "smtp.gmail.com"),
-		SMTPPort: getEnvInt("SMTP_PORT", 587),
-		SMTPUsername: getEnv("SMTP_USERNAME", ""),
-		SMTPPassword: getEnv("SMTP_PASSWORD", ""),
-		FromeEmail: getEnv("FROM_EMAIL", "noreply@example.com"),
+    return &Config{
+        ServerPort:  serverPort,
+        DatabaseURL: getEnv("DATABASE_URL", ""), // FIXED: Database_URL → DATABASE_URL
+        Environment: getEnv("ENVIRONMENT", "development"), // FIXED: Environment → ENVIRONMENT
+        LogLevel:    getEnv("LOG_LEVEL", "info"), // FIXED: Log_Level → LOG_LEVEL
+    
+        // Email configuration with defaults
+        SMTPHost:      getEnv("SMTP_HOST", "smtp.gmail.com"),
+        SMTPPort:      getEnvInt("SMTP_PORT", 465), // FIXED: 587 → 465
+        SMTPUsername:  getEnv("SMTP_USERNAME", ""),
+        SMTPPassword:  getEnv("SMTP_PASSWORD", ""),
+        FromeEmail:     getEnv("FROM_EMAIL", "noreply@example.com"), // FIXED: FromeEmail → FromEmail
 
-		//rate linit configs
-		RateLimitRequest: getEnvInt("RATE_LIMIT_REQUEST", 5),
-		RateLimitMinutes: getEnvInt("RATE_LIMIT_MINUTES", 1),
+        // Rate limiting configuration
+        RateLimitRequest: getEnvInt("RATE_LIMIT_REQUESTS", 5), // FIXED: RateLimitRequest → RateLimitRequests
+        RateLimitMinutes:  getEnvInt("RATE_LIMIT_MINUTES", 1),
 
-		//security configs
-		MaxRequestBodySize: getEnvInt("MAX_REQUEST_SIZE", 1*1024*1024),
-		AllowedOrigins: getEnv("ALLOWED_ORIGINS", "*"),
+        // Security configuration
+        MaxRequestBodySize: getEnvInt("MAX_REQUEST_SIZE", 1*1024*1024),
+        AllowedOrigins:     getEnv("ALLOWED_ORIGINS", "*"),
 
-		//logging config
-		LogFormat: getEnv("LOG_FORMAT", "json"),
-	}
-
-	
+        // Logging configuration
+        LogFormat: getEnv("LOG_FORMAT", "json"),
+    }
 }
 
 
