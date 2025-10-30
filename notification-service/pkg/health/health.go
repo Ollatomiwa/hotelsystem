@@ -94,7 +94,8 @@ func (h *HealthChecker) Check(ctx context.Context) HealthStatus {
     return status
 }
 
-// DatabaseCheck checks database connectivity
+
+// DatabaseCheck checks PostgreSQL database connectivity
 func DatabaseCheck(db *sql.DB) CheckFunc {
     return func(ctx context.Context) error {
         return db.PingContext(ctx)

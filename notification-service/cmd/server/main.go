@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -18,53 +19,55 @@ import (
 	"github.com/ollatomiwa/hotelsystem/notification-service/internal/services"
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/config"
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/email"
-	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/ratelimiter"
-	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/middleware"
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/health"
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/logging"
+	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/middleware"
+	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/ratelimiter"
 )
 
+// initDB initializes the PostgreSQL database and creates tables
+func initDB(connectionString string) (*sql.DB, error) {
+    if connectionString == "" {
+        return nil, fmt.Errorf("DATABASE_URL is required")
+    }
 
-//initDB initializes sqlited db and creates tables
-func initDB(dbPath string) (*sql.DB, error){
-	db, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		return nil, err 
-	}
+    db, err := sql.Open("postgres", connectionString)
+    if err != nil {
+        return nil, err
+    }
 
-	//creating notification tables
-	createTableSQL := `
-    CREATE TABLE IF NOT EXISTS notifications (
-        id TEXT PRIMARY KEY,
-        to_email TEXT NOT NULL,
-        subject TEXT NOT NULL,
-        body TEXT NOT NULL,
-        status TEXT NOT NULL,
-        type TEXT NOT NULL,
-        retry_count INTEGER DEFAULT 0,
-        sent_at TEXT NULL,          
-        error TEXT DEFAULT ''
-    )
-`
-	_, err = db.Exec(createTableSQL)
-	if err != nil {
-		return nil, err 
-	}
+    // Test connection
+    if err := db.Ping(); err != nil {
+        return nil, fmt.Errorf("failed to connect to database: %w", err)
+    }
 
-	//Enable WAL Mode for bettter concurrency
-	_, err = db.Exec("PRAGMA journal_mode=WAL;")
-	if err != nil {
-		return nil, err 
-	}
+    // Create notifications table for PostgreSQL
+    createTableSQL := `
+        CREATE TABLE IF NOT EXISTS notifications (
+            id TEXT PRIMARY KEY,
+            to_email TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            body TEXT NOT NULL,
+            status TEXT NOT NULL,
+            type TEXT NOT NULL,
+            retry_count INTEGER DEFAULT 0,
+            sent_at TEXT NULL,
+            error TEXT DEFAULT ''
+        )
+    `
 
-	log.Println("Database initialized successfully")
-	return db, nil
+    _, err = db.Exec(createTableSQL)
+    if err != nil {
+        return nil, err
+    }
 
+    log.Println("PostgreSQL database initialized successfully")
+    return db, nil
 }
 //setupROUTER to initialize all depencies and set up http routes
 func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 	//initializes db
-	db, err := initDB(cfg.DatabasePath)
+	db, err := initDB(cfg.DatabaseURL)
 	if err != nil {
 		return nil, err 
 	}

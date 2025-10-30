@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	ServerPort string
-	DatabasePath string
+	DatabaseURL string
 	Environment string
 	LogLevel string 
 
@@ -43,7 +43,7 @@ func Load() *Config {
 
 	return &Config{
 		ServerPort: serverPort,
-		DatabasePath: getEnv("Database_Path", "./notifications.db"),
+		DatabaseURL: getEnv("Database_URL", "./notifications.db"),
 		Environment: getEnv("Environment", "development"),
 		LogLevel: getEnv("Log_Level", "info"),
 	
