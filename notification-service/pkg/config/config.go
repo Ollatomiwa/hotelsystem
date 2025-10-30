@@ -24,6 +24,10 @@ type Config struct {
 	//rate limit configuration
 	RateLimitRequest int
 	RateLimitMinutes int
+
+	//security configuration
+	MaxRequestBodySize int
+	AllowedOrigins string
 }
 
 
@@ -49,7 +53,13 @@ func Load() *Config {
 		//rate linit configs
 		RateLimitRequest: getEnvInt("RATE_LIMIT_REQUEST", 5),
 		RateLimitMinutes: getEnvInt("RATE_LIMIT_MINUTES", 1),
+
+		//security configs
+		MaxRequestBodySize: getEnvInt("MAX_REQUEST_SIZE", 1*1024*1024),
+		AllowedOrigins: getEnv("ALLOWED_ORIGINS", "*"),
 	}
+
+	
 }
 
 
