@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 
 	"github.com/ollatomiwa/hotelsystem/notification-service/internal/handlers"
-	"github.com/ollatomiwa/hotelsystem/notification-service/internal/repositories/sqlite"
+	"github.com/ollatomiwa/hotelsystem/notification-service/internal/repositories/postgres"
 	"github.com/ollatomiwa/hotelsystem/notification-service/internal/services"
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/config"
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/email"
@@ -34,18 +34,18 @@ func initDB(dbPath string) (*sql.DB, error){
 
 	//creating notification tables
 	createTableSQL := `
-		CREATE TABLE IF NOT EXISTS notifications (
-		id TEXT PRIMARY KEY,
-		to_email TEXT NOT NULL,
-		subject TEXT NOT NULL,
-		body TEXT NOT NULL,
-		status TEXT NOT NULL,
-		type TEXT NOT NULL,
-		retry_count INTEGER DEFAULT 0,
-		sent_at TEXT NOT NULL,
-		error TEXT DEFAULT ''
-		)
-	`
+    CREATE TABLE IF NOT EXISTS notifications (
+        id TEXT PRIMARY KEY,
+        to_email TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        body TEXT NOT NULL,
+        status TEXT NOT NULL,
+        type TEXT NOT NULL,
+        retry_count INTEGER DEFAULT 0,
+        sent_at TEXT NULL,          
+        error TEXT DEFAULT ''
+    )
+`
 	_, err = db.Exec(createTableSQL)
 	if err != nil {
 		return nil, err 
@@ -80,7 +80,7 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
     ))
 
 	//initializes repos
-	notificationRepo := sqlite.NewNotificationRepo(db)
+	notificationRepo := postgres.NewNotificationRepo(db)
 
 	//initialize email sender
 	emailSender := email.NewSMTPSender(
