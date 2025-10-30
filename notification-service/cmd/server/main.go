@@ -20,7 +20,10 @@ import (
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/email"
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/ratelimiter"
 	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/middleware"
+	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/health"
+	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/logging"
 )
+
 
 //initDB initializes sqlited db and creates tables
 func initDB(dbPath string) (*sql.DB, error){
@@ -66,6 +69,16 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 		return nil, err 
 	}
 
+	//initialize logging
+	logger := logging.NewLogger("notification-service")
+
+	//initialize health checker
+	healthChecker := health.NewHealthChecker()
+    healthChecker.RegisterCheck("database", health.DatabaseCheck(db))
+    healthChecker.RegisterCheck("smtp", health.SMTPCheck(
+        cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword,
+    ))
+
 	//initializes repos
 	notificationRepo := sqlite.NewNotificationRepo(db)
 
@@ -104,8 +117,8 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 	//initilizes handlers
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 
-	//setup gin router
-	router:= gin.Default()
+	//setup gin router : use new instead
+	router:= gin.New()
 
 	//add security middleware
 	securityConfig := &middleware.SecurityConfig{
@@ -116,11 +129,24 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 	router.Use(middleware.SecurityMiddleware(securityConfig))
 
 	//add middleware
-	router.Use(gin.Logger())
+	router.Use(logger.RequestIDMiddleware())
+	router.Use(logger.LoggingMiddleware())
+	router.Use(middleware.SecurityMiddleware(securityConfig))
 	router.Use(gin.Recovery())
 
-	//healthcheck
-	router.GET("/health", notificationHandler.HealthCheck)
+	// Enhanced health check with detailed status
+    router.GET("/health", func(c *gin.Context) {
+        status := healthChecker.Check(c.Request.Context())
+        c.JSON(200, status)
+    })
+	 router.GET("/ready", func(c *gin.Context) {
+    // Simple readiness check - just database
+    if err := db.PingContext(c.Request.Context()); err != nil {
+        c.JSON(503, gin.H{"status": "not ready", "error": err.Error()})
+        	 return
+        }
+        c.JSON(200, gin.H{"status": "ready"})
+    })
 
 	//API routes
 	api := router.Group("/api/v1")
@@ -132,8 +158,8 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 		}
 	}
 
-	log.Printf("rate limiting: %d requests per %d minutes", cfg.RateLimitRequest, cfg.RateLimitMinutes)
-	log.Printf("SMTP configured: %s:%d", cfg.SMTPHost, cfg.SMTPPort)
+	 log.Printf("Monitoring: Structured logging enabled")
+    log.Printf("Monitoring: Health checks registered for database and SMTP")
 	return router, nil
 }
 

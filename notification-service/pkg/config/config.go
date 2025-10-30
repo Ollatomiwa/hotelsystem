@@ -28,6 +28,9 @@ type Config struct {
 	//security configuration
 	MaxRequestBodySize int
 	AllowedOrigins string
+
+	//logging config
+	LogFormat string
 }
 
 
@@ -57,6 +60,9 @@ func Load() *Config {
 		//security configs
 		MaxRequestBodySize: getEnvInt("MAX_REQUEST_SIZE", 1*1024*1024),
 		AllowedOrigins: getEnv("ALLOWED_ORIGINS", "*"),
+
+		//logging config
+		LogFormat: getEnv("LOG_FORMAT", "json"),
 	}
 
 	
