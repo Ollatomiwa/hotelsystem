@@ -82,7 +82,7 @@ Local Development
 bash
 
 # Clone repository
-git clone https://github.com/yourusername/notification-service.git
+git clone https://github.com/ollatomiwa/hotelsystem/notification-service.git
 cd notification-service
 
 # Install dependencies
