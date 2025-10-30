@@ -27,20 +27,16 @@ import (
 
 // initDB initializes the PostgreSQL database and creates tables
 func initDB(connectionString string) (*sql.DB, error) {
-    // Emergency fallback for Railway
     if connectionString == "" {
-        // Try multiple ways to get DATABASE_URL
         connectionString = os.Getenv("DATABASE_URL")
     }
     
     if connectionString == "" {
-        // LAST RESORT: Return a mock database that does nothing
-        // This allows the app to start so we can see other errors
-        log.Println("⚠️ WARNING: DATABASE_URL not found, using mock database")
-        return &sql.DB{}, nil // Mock empty database
+        return nil, fmt.Errorf("DATABASE_URL is required")
     }
 
-    log.Printf("Connecting to PostgreSQL: %s", "postgresql://username:****@host/database")
+    // Mask password for logs
+    log.Printf("Connecting to PostgreSQL database...")
     
     db, err := sql.Open("postgres", connectionString)
     if err != nil {
@@ -52,8 +48,21 @@ func initDB(connectionString string) (*sql.DB, error) {
         return nil, fmt.Errorf("failed to connect to database: %w", err)
     }
 
-    // Create table
-    createTableSQL := `CREATE TABLE IF NOT EXISTS notifications (...)`
+    // FIXED: Complete SQL without ... placeholder
+    createTableSQL := `
+        CREATE TABLE IF NOT EXISTS notifications (
+            id TEXT PRIMARY KEY,
+            to_email TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            body TEXT NOT NULL,
+            status TEXT NOT NULL,
+            type TEXT NOT NULL,
+            retry_count INTEGER DEFAULT 0,
+            sent_at TEXT NULL,
+            error TEXT DEFAULT ''
+        )
+    `
+
     _, err = db.Exec(createTableSQL)
     if err != nil {
         return nil, fmt.Errorf("failed to create table: %w", err)
