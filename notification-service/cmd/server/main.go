@@ -27,29 +27,29 @@ import (
 
 // initDB initializes the PostgreSQL database and creates tables
 func initDB(connectionString string) (*sql.DB, error) {
-    if connectionString == "" {
-        connectionString = os.Getenv("DATABASE_URL")
-    }
-    
-    if connectionString == "" {
-        return nil, fmt.Errorf("DATABASE_URL is required")
-    }
+	if connectionString == "" {
+		connectionString = os.Getenv("DATABASE_URL")
+	}
 
-    // Mask password for logs
-    log.Printf("Connecting to PostgreSQL database...")
-    
-    db, err := sql.Open("postgres", connectionString)
-    if err != nil {
-        return nil, fmt.Errorf("failed to open database: %w", err)
-    }
+	if connectionString == "" {
+		return nil, fmt.Errorf("DATABASE_URL is required")
+	}
 
-    // Test connection
-    if err := db.Ping(); err != nil {
-        return nil, fmt.Errorf("failed to connect to database: %w", err)
-    }
+	// Mask password for logs
+	log.Printf("Connecting to PostgreSQL database...")
 
-    // FIXED: Complete SQL without ... placeholder
-    createTableSQL := `
+	db, err := sql.Open("postgres", connectionString)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	// Test connection
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	// FIXED: Complete SQL without ... placeholder
+	createTableSQL := `
         CREATE TABLE IF NOT EXISTS notifications (
             id TEXT PRIMARY KEY,
             to_email TEXT NOT NULL,
@@ -63,20 +63,21 @@ func initDB(connectionString string) (*sql.DB, error) {
         )
     `
 
-    _, err = db.Exec(createTableSQL)
-    if err != nil {
-        return nil, fmt.Errorf("failed to create table: %w", err)
-    }
+	_, err = db.Exec(createTableSQL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create table: %w", err)
+	}
 
-    log.Println("✅ PostgreSQL database initialized successfully")
-    return db, nil
+	log.Println("✅ PostgreSQL database initialized successfully")
+	return db, nil
 }
-//setupROUTER to initialize all depencies and set up http routes
+
+// setupROUTER to initialize all depencies and set up http routes
 func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 	// Initialize db
 	db, err := initDB(cfg.DatabaseURL)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 
 	// Initialize logging
@@ -84,27 +85,29 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 
 	// Initialize health checker
 	healthChecker := health.NewHealthChecker()
-    healthChecker.RegisterCheck("database", health.DatabaseCheck(db))
-    
-    // FIX: Use the actual configured port, not hardcoded 587
-    healthChecker.RegisterCheck("smtp", health.SMTPCheck(
-        cfg.SMTPHost, 
-        cfg.SMTPPort,  // ← This should be 465 now
-        cfg.SMTPUsername, 
-        cfg.SMTPPassword,
-    ))
+	healthChecker.RegisterCheck("database", health.DatabaseCheck(db))
 
+	
 	// Initialize repos
 	notificationRepo := postgres.NewNotificationRepo(db)
 
 	// Initialize email sender
-	emailSender := email.NewSMTPSender(
-		cfg.SMTPHost,
-		cfg.SMTPPort,
-		cfg.SMTPUsername,
-		cfg.SMTPPassword,
-		cfg.FromeEmail, // FIXED: FromeEmail → FromEmail
+	// Initialize email sender with Resend
+	emailSender := email.NewResendSender(
+		cfg.ResendAPIKey, // Make sure this field exists in your config
+		cfg.FromEmail,
 	)
+
+	// Testing Resend connection in development
+	if cfg.Environment == "development" && cfg.ResendAPIKey != "" {
+		log.Println("Testing Resend connection...")
+		if err := emailSender.TestConnection(); err != nil {
+			log.Printf("Warning: Resend connection test failed: %v", err)
+			log.Println("Emails may not send properly. Check your Resend API key.")
+		} else {
+			log.Println("Resend connection test successful!")
+		}
+	}
 
 	// Initialize rate limiter
 	rateLimiter := ratelimiter.NewRateLimiter(
@@ -129,7 +132,7 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 		emailSender,
 		rateLimiter,
 	)
-	
+
 	// Initialize handlers
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 
@@ -138,7 +141,7 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 
 	// Add security middleware
 	securityConfig := &middleware.SecurityConfig{
-		MaxBodySize: int(cfg.MaxRequestBodySize), // FIXED: int → int64
+		MaxBodySize:    int(cfg.MaxRequestBodySize), // FIXED: int → int64
 		AllowedOrigins: cfg.AllowedOrigins,
 	}
 
@@ -154,18 +157,18 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 		if err != nil {
 			c.JSON(500, gin.H{"error": fmt.Sprintf("External API blocked: %v", err)})
 			return
-		}	
+		}
 		defer resp.Body.Close()
-	
+
 		c.JSON(200, gin.H{"status": "External API accessible", "github_status": resp.StatusCode})
 	})
 
 	// Enhanced health check with detailed status
-    router.GET("/health", func(c *gin.Context) {
-        status := healthChecker.Check(c.Request.Context())
-        c.JSON(200, status)
-    })
-	 
+	router.GET("/health", func(c *gin.Context) {
+		status := healthChecker.Check(c.Request.Context())
+		c.JSON(200, status)
+	})
+
 	router.GET("/ready", func(c *gin.Context) {
 		// Simple readiness check - just database
 		if err := db.PingContext(c.Request.Context()); err != nil {
@@ -186,11 +189,11 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 	}
 
 	log.Printf("Monitoring: Structured logging enabled")
-    log.Printf("Monitoring: Health checks registered for database and SMTP")
+	log.Printf("Monitoring: Health checks registered for database and SMTP")
 	return router, nil
 }
 
-func main () {
+func main() {
 	cfg := config.Load()
 	//setup router
 	router, err := setupRouter(cfg)
@@ -200,11 +203,11 @@ func main () {
 
 	//creating HTTP server
 	server := &http.Server{
-		Addr: ":" + cfg.ServerPort,
-		Handler: router,
-		ReadTimeout: 15 *time.Second,
+		Addr:         ":" + cfg.ServerPort,
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
-		IdleTimeout: 60 *time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
 	go func() {
@@ -230,5 +233,5 @@ func main () {
 	}
 
 	log.Println("Server exited gracefully")
-	
+
 }

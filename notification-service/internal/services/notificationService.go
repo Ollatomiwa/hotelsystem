@@ -13,7 +13,7 @@ import (
 
 type NotificationService struct {
 	repo repositories.NotificationRepository
-	emailSender *email.SMTPSender
+	emailSender *email.ResendSender
 	rateLimiter *ratelimiter.RateLimiter
 
 }
@@ -21,7 +21,7 @@ type NotificationService struct {
 //newnotificationservice creates a new notification service
 func NewNotificationService(
 	repo repositories.NotificationRepository,
-	emailSender *email.SMTPSender,
+	emailSender *email.ResendSender,
 	rateLimiter *ratelimiter.RateLimiter,
 	) *NotificationService {
 	return &NotificationService{

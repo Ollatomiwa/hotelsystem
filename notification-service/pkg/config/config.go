@@ -14,12 +14,9 @@ type Config struct {
 	Environment string
 	LogLevel string 
 
-	//email configurations
-	SMTPHost string
-	SMTPPort int
-	SMTPUsername string
-	SMTPPassword string
-	FromeEmail string
+	 // Resend configuration
+    ResendAPIKey string
+    FromEmail    string
 
 	//rate limit configuration
 	RateLimitRequest int
@@ -47,12 +44,11 @@ func Load() *Config {
         Environment: getEnv("ENVIRONMENT", "development"), // FIXED: Environment → ENVIRONMENT
         LogLevel:    getEnv("LOG_LEVEL", "info"), // FIXED: Log_Level → LOG_LEVEL
     
-        // Email configuration with defaults
-        SMTPHost:      getEnv("SMTP_HOST", "smtp.gmail.com"),
-        SMTPPort:      getEnvInt("SMTP_PORT", 465), // FIXED: 587 → 465
-        SMTPUsername:  getEnv("SMTP_USERNAME", ""),
-        SMTPPassword:  getEnv("SMTP_PASSWORD", ""),
-        FromeEmail:     getEnv("FROM_EMAIL", "noreply@example.com"), // FIXED: FromeEmail → FromEmail
+         // Resend configuration
+        ResendAPIKey: getEnv("RESEND_API_KEY", ""),
+        FromEmail:    getEnv("FROM_EMAIL", "noreply@example.com"),
+
+		
 
         // Rate limiting configuration
         RateLimitRequest: getEnvInt("RATE_LIMIT_REQUESTS", 5), // FIXED: RateLimitRequest → RateLimitRequests
