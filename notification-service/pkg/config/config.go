@@ -43,7 +43,7 @@ func Load() *Config {
 
 	return &Config{
 		ServerPort: serverPort,
-		DatabaseURL: getEnv("Database_URL", "./notifications.db"),
+		DatabaseURL: getEnv("Database_URL", ""),
 		Environment: getEnv("Environment", "development"),
 		LogLevel: getEnv("Log_Level", "info"),
 	
