@@ -51,8 +51,8 @@ func Load() *Config {
 		
 
         // Rate limiting configuration
-        RateLimitRequest: getEnvInt("RATE_LIMIT_REQUESTS", 5), // FIXED: RateLimitRequest → RateLimitRequests
-        RateLimitMinutes:  getEnvInt("RATE_LIMIT_MINUTES", 1),
+        RateLimitRequest: getEnvInt("RATE_LIMIT_REQUESTS", 1), // FIXED: RateLimitRequest → RateLimitRequests
+        RateLimitMinutes:  getEnvInt("RATE_LIMIT_MINUTES", 60),
 
         // Security configuration
         MaxRequestBodySize: getEnvInt("MAX_REQUEST_SIZE", 1*1024*1024),
