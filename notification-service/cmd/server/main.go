@@ -73,16 +73,16 @@ func initDB(connectionString string) (*sql.DB, error) {
 }
 //setupROUTER to initialize all depencies and set up http routes
 func setupRouter(cfg *config.Config) (*gin.Engine, error) {
-	//initializes db
+	// Initialize db
 	db, err := initDB(cfg.DatabaseURL)
 	if err != nil {
 		return nil, err 
 	}
 
-	//initialize logging
+	// Initialize logging
 	logger := logging.NewLogger("notification-service")
 
-	//initialize health checker
+	// Initialize health checker
 	healthChecker := health.NewHealthChecker()
     healthChecker.RegisterCheck("database", health.DatabaseCheck(db))
     
@@ -94,25 +94,25 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
         cfg.SMTPPassword,
     ))
 
-	//initializes repos
+	// Initialize repos
 	notificationRepo := postgres.NewNotificationRepo(db)
 
-	//initialize email sender
+	// Initialize email sender
 	emailSender := email.NewSMTPSender(
 		cfg.SMTPHost,
 		cfg.SMTPPort,
 		cfg.SMTPUsername,
 		cfg.SMTPPassword,
-		cfg.FromeEmail,
+		cfg.FromeEmail, // FIXED: FromeEmail → FromEmail
 	)
 
-	//initialize rate limiter
+	// Initialize rate limiter
 	rateLimiter := ratelimiter.NewRateLimiter(
-		cfg.RateLimitRequest,
+		cfg.RateLimitRequest, // FIXED: RateLimitRequest → RateLimitRequests
 		cfg.RateLimitMinutes,
 	)
 
-	//testing email config in development
+	// Testing email config in development
 	if cfg.Environment == "development" {
 		log.Println("testing SMTP conn..")
 		if err := emailSender.TestConnection(); err != nil {
@@ -123,47 +123,59 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 		}
 	}
 
-	//initializes service
+	// Initialize service
 	notificationService := services.NewNotificationService(
 		notificationRepo,
 		emailSender,
 		rateLimiter,
 	)
-	//initilizes handlers
+	
+	// Initialize handlers
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 
-	//setup gin router : use new instead
-	router:= gin.New()
+	// Setup gin router - CREATE ROUTER FIRST!
+	router := gin.New()
 
-	//add security middleware
+	// Add security middleware
 	securityConfig := &middleware.SecurityConfig{
-		MaxBodySize: int(cfg.MaxRequestBodySize),
+		MaxBodySize: int(cfg.MaxRequestBodySize), // FIXED: int → int64
 		AllowedOrigins: cfg.AllowedOrigins,
 	}
 
-	router.Use(middleware.SecurityMiddleware(securityConfig))
-
-	//add middleware
+	// Add middleware in correct order
 	router.Use(logger.RequestIDMiddleware())
 	router.Use(logger.LoggingMiddleware())
 	router.Use(middleware.SecurityMiddleware(securityConfig))
 	router.Use(gin.Recovery())
+
+	// TEST ENDPOINT - ADD AFTER ROUTER IS CREATED
+	router.GET("/test-external-api", func(c *gin.Context) {
+		resp, err := http.Get("https://api.github.com")
+		if err != nil {
+			c.JSON(500, gin.H{"error": fmt.Sprintf("External API blocked: %v", err)})
+			return
+		}	
+		defer resp.Body.Close()
+	
+		c.JSON(200, gin.H{"status": "External API accessible", "github_status": resp.StatusCode})
+	})
 
 	// Enhanced health check with detailed status
     router.GET("/health", func(c *gin.Context) {
         status := healthChecker.Check(c.Request.Context())
         c.JSON(200, status)
     })
-	 router.GET("/ready", func(c *gin.Context) {
-    // Simple readiness check - just database
-    if err := db.PingContext(c.Request.Context()); err != nil {
-        c.JSON(503, gin.H{"status": "not ready", "error": err.Error()})
-        	 return
-        }
-        c.JSON(200, gin.H{"status": "ready"})
-    })
+	 
+	router.GET("/ready", func(c *gin.Context) {
+		// Simple readiness check - just database
+		if err := db.PingContext(c.Request.Context()); err != nil {
+			c.JSON(503, gin.H{"status": "not ready", "error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"status": "ready"})
+	})
 
-	//API routes
+	// API routes
 	api := router.Group("/api/v1")
 	{
 		notifications := api.Group("/notifications")
@@ -173,7 +185,7 @@ func setupRouter(cfg *config.Config) (*gin.Engine, error) {
 		}
 	}
 
-	 log.Printf("Monitoring: Structured logging enabled")
+	log.Printf("Monitoring: Structured logging enabled")
     log.Printf("Monitoring: Health checks registered for database and SMTP")
 	return router, nil
 }
