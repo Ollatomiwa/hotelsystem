@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/smtp"
+	"time"
+
+	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/circuitbreaker"
+	"github.com/ollatomiwa/hotelsystem/notification-service/pkg/retry"
 )
 
 //SMTP sender handles sebding emails via smtp
@@ -14,21 +18,42 @@ type SMTPSender struct {
 	username string
 	password string
 	from string 
+	cb *circuitbreaker.CircuitBreaker
 }
 
 //new smtp sender to create a new smtp email sender
 func NewSMTPSender (host string, port int, username, password, from string) *SMTPSender {
+	//circuit breaker: 5 failures open circuit, 2 successess to closse, 30 seconds time out
+	cb := circuitbreaker.NewCircuitBreaker(5,2,30*time.Second)
 	return &SMTPSender{
 		host: host,
 		port: port,
 		username: username,
 		password: password,
 		from: from, 
+		cb: cb,
 	}
 }
 
 //sendemail method to send email using SMTP
 func (s *SMTPSender) SendEmail(to, subject, body string) error {
+	
+	//use circuit breaker
+	err := s.cb.Execute(func()error {
+		// use retry mechanism for temporary failures
+		retryConfig := retry.DefaultRetryConfig()
+
+		return retry.Retry(retryConfig, func() error {
+			return s.sendEmailInternal(to, subject, body)
+		})
+	})
+
+	return err
+	
+}
+
+//send email internal contains acual email sending logic
+func (s *SMTPSender) sendEmailInternal(to, subject, body string) error {
 	//setting up authnentication info
 	auth := smtp.PlainAuth("", s.username, s.password, s.host)
 
@@ -46,8 +71,7 @@ func (s *SMTPSender) SendEmail(to, subject, body string) error {
 	//for other ports use regular smtp
 	return smtp.SendMail(addr, auth, s.from, []string{to}, []byte(message))
 }
-
-//sendwithstarttls methosd handls smpt for port 587
+//sendwithstarttls methosd handles smpt for port 587
 func (s *SMTPSender) sendWithStartTLS(addr string, auth smtp.Auth, to string, message[]byte) error {
 	//coonect to the smtp server
 	client, err := smtp.Dial(addr)
