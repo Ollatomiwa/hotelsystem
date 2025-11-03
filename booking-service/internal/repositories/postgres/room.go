@@ -27,7 +27,7 @@ func (r *RoomRepository) GetRoomById(ctx context.Context, id string) (*models.Ro
 			&room.RoomType,
 			&room.PricePerNight,
 			&room.MaxGuests,
-			&room.Avalaible,
+			&room.Available,
 			&room.Description,
 		)
 
@@ -51,7 +51,7 @@ func (r *RoomRepository) CreateRoom(ctx context.Context, room *models.Room) erro
 		room.RoomType,
 		room.PricePerNight,
 		room.MaxGuests,
-		room.Avalaible,
+		room.Available,
 		room.Description,
 	)
 	if err != nil {
@@ -79,7 +79,7 @@ func (r *RoomRepository) GetAllRooms(ctx context.Context) ([]models.Room, error)
 			&room.RoomType,
 			&room.PricePerNight,
 			&room.MaxGuests,
-			&room.Avalaible,
+			&room.Available,
 			&room.Description,
 		)
 		if err != nil {

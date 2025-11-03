@@ -43,7 +43,7 @@ type Room struct {
 	RoomType RoomType `json:"room_type"`
 	PricePerNight float64 `json:"price_per_night"`
 	MaxGuests int `json:"max_guests"`
-	Avalaible bool `json:"available"`
+	Available bool `json:"available"`
 	Description string `json:"description"`
 }
 //createbooking request represents the payload for creating a booking
