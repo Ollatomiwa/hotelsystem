@@ -30,7 +30,7 @@ type Booking struct {
 	CheckIn time.Time `json:"check_in"`
 	CheckOut time.Time `json:"check_out"`
 	Guest int `json:"guests"`
-	TotalAmout float64 `json:"total_amount"`
+	TotalAmount float64 `json:"total_amount"`
 	Status BookingStatus `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
