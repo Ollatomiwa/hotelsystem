@@ -52,7 +52,7 @@ type BookingRequest struct {
 	RoomId string `json:"room_id" binding:"required"`
 	CheckIn string `json:"check_in" binding:"required"`
 	CheckOut string `json:"check_out" binding:"required"`
-	Guests int `json:"guests" binding:"Required,min=1,max=5"`
+	Guests int `json:"guests" binding:"required,min=1,max=5"`
 }
 //availability request represents the payload for check room availability
 type AvailabilityRequest struct {
