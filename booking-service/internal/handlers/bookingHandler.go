@@ -85,6 +85,38 @@ func (h *BookingHandler) CancelBooking(c *gin.Context) {
 
 }
 
+func (h *BookingHandler) CheckAvailability(c *gin.Context) {
+	var req models.AvailabilityRequest
+	
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "invalid_request",
+			Message: "Invalid request payload: " + err.Error(),
+		})
+		return
+	}
+
+	// Validate room type
+	if !isValidRoomType(req.RoomType) {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "invalid_room_type",
+			Message: "Room type must be one of: single, double, deluxe",
+		})
+		return
+	}
+
+	availability, err := h.bookingService.CheckAvailability(c.Request.Context(), &req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "availability_check_failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, availability)
+}
+
 // Helper functions
 func isValidRoomType(roomType models.RoomType) bool {
 	switch roomType {
