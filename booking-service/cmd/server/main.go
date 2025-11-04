@@ -12,14 +12,17 @@ import (
 )
 
 func main() {
-	cfg :=config.Load()
+	// Load configuration
+	cfg := config.Load()
 
+	// Set Gin mode
 	if cfg.Server.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
 
+	// Initialize database connection
 	db, err := database.NewPostgresConn(database.Config{
 		Host:     cfg.Database.Host,
 		Port:     cfg.Database.Port,
@@ -29,27 +32,34 @@ func main() {
 		SSLMode:  cfg.Database.SSLMode,
 	})
 	if err != nil {
-		log.Fatal("failed to connect to database", err)
+		log.Fatal("Failed to connect to database:", err)
 	}
 	defer db.Close()
 
+	// Initialize database schema
 	if err := database.InitializeSchema(db); err != nil {
-		log.Fatal("failed to initialize database schema:", err)
+		log.Fatal("Failed to initialize database schema:", err)
 	}
 
+	// Initialize repositories
 	bookingRepo := postgres.NewBookingRepository(db)
 	roomRepo := postgres.NewRoomRepository(db)
 
+	// Initialize services
 	bookingService := services.NewBookingService(bookingRepo, roomRepo)
 
+	// Create Gin router
 	router := gin.Default()
 
+	// Setup routes
 	handlers.SetupRoutes(router, bookingService)
 
-	log.Printf("BOoking service is starting on port %s", cfg.Server.Port)
-	log.Printf("Environment %s", cfg.Server.Env)
-
-	if err := router.Run(":", cfg.Server.Port); err != nil {
-		log.Fatal("failed to start server:", err)
+	// Start server - FIXED: Use proper port format
+	address := ":" + cfg.Server.Port
+	log.Printf("🚀 Booking Service starting on port %s", cfg.Server.Port)
+	log.Printf("📊 Environment: %s", cfg.Server.Env)
+	
+	if err := router.Run(address); err != nil {
+		log.Fatal("Failed to start server:", err)
 	}
 }
