@@ -98,7 +98,7 @@ func (r *BookingRepository) GetAvailableRooms(ctx context.Context, req *models.A
 	query := `
 		SELECT r.id, r.room_number, r.room_type, r.price_per_night, r.max_guests 
 		FROM rooms r
-		WGERE r.room_type = $1
+		WHERE r.room_type = $1
 		AND r.available = TRUE
 		AND r.max_guests >= $2
 		AND r.id NOT IN (
