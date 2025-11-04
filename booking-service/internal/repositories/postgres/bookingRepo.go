@@ -8,6 +8,7 @@ import (
 
 	"github.com/lib/pq"
 	"github.com/ollatomiwa/hotelsystem/booking-service/internal/models"
+	"github.com/ollatomiwa/hotelsystem/booking-service/internal/repositories"
 )
 
 type BookingRepository struct {
@@ -18,6 +19,8 @@ func NewBookingRepository(db *sql.DB) *BookingRepository {
 	return &BookingRepository{db :db}
 }
 
+var _ repositories.BookingRepository = (*BookingRepository)(nil)
+
 //ceate creates a new booking with transaction
 func (r *BookingRepository) CreateBooking(ctx context.Context, booking *models.Booking) error {
 	//start transaction
@@ -27,7 +30,7 @@ func (r *BookingRepository) CreateBooking(ctx context.Context, booking *models.B
 	}
 	defer tx.Rollback()
 	//check if room is available
-	isAvailable, err := r.isRoomAvailable(ctx, tx, booking.RoomId, booking.CheckIn, booking.CheckOut)
+	isAvailable, err := r.IsRoomAvailable(ctx, booking.RoomId, booking.CheckIn, booking.CheckOut)
 	if err != nil {
 		return fmt.Errorf("room availability check failed: %w", err)
 	}
@@ -64,22 +67,22 @@ func (r *BookingRepository) CreateBooking(ctx context.Context, booking *models.B
 }
 
 //checks if a room is available for a given date
-func (r *BookingRepository) isRoomAvailable(ctx context.Context, tx *sql.Tx, roomId string, checkIn, checkOut time.Time) (bool, error) {
-	query := `
-		SELECT COUNT(*) FROM bookings
-		WHERE room_id = $1
-		AND status IN ('pending', 'confirmed')
-		AND (check_In, check_out) OVERLAPS ($2, $3)
-	`
-	var count int
-	err := tx.QueryRowContext(ctx, query, roomId, checkIn, checkOut).Scan(&count)
-	if err != nil {
-		return false, fmt.Errorf("failed to check room availability: %w", err)
-	}
-
-	return count == 0, nil
+func (r *BookingRepository) IsRoomAvailable(ctx context.Context, roomID string, checkIn, checkOut time.Time) (bool, error) {
+    query := `
+        SELECT COUNT(*) FROM bookings 
+        WHERE room_id = $1 
+        AND status IN ('pending', 'confirmed')
+        AND (check_in, check_out) OVERLAPS ($2, $3)
+    `
+    
+    var count int
+    err := r.db.QueryRowContext(ctx, query, roomID, checkIn, checkOut).Scan(&count)
+    if err != nil {
+        return false, fmt.Errorf("failed to check room availability: %w", err)
+    }
+    
+    return count == 0, nil
 }
-
 //checking to find available rooms for given criteria
 func (r *BookingRepository) GetAvailableRooms(ctx context.Context, req *models.AvailabilityRequest) ([]models.RoomAvailability, error) {
 	checkIn, err := time.Parse("2006-01-02", req.CheckIn)

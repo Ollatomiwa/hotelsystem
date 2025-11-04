@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ollatomiwa/hotelsystem/booking-service/internal/models"
+	"github.com/ollatomiwa/hotelsystem/booking-service/internal/repositories"
 )
 
 type RoomRepository struct {
@@ -14,6 +15,8 @@ type RoomRepository struct {
 func NewRoomRepository(db *sql.DB) *RoomRepository {
 	return &RoomRepository{db:db}
 }
+
+var _ repositories.BookingRepository = (*BookingRepository)(nil)
 
 //retrieves room by its Id
 func (r *RoomRepository) GetRoomById(ctx context.Context, id string) (*models.Room, error) {
