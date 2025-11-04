@@ -21,7 +21,7 @@ var _ repositories.BookingRepository = (*BookingRepository)(nil)
 //retrieves room by its Id
 func (r *RoomRepository) GetRoomById(ctx context.Context, id string) (*models.Room, error) {
 	query := `
-		SELECT id, room_number, room_type, price_per_night, max_guests, available, description`
+		SELECT id, room_number, room_type, price_per_night, max_guests, available, description FROM rooms WHERE id = $1`
 
 		var room models.Room
 		err := r.db.QueryRowContext(ctx, query, id).Scan(
