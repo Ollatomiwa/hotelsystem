@@ -38,7 +38,7 @@ func (r *BookingRepository) CreateBooking(ctx context.Context, booking *models.B
 		return fmt.Errorf("room is not available for the selected date")
 	}
 	//insert booking
-	query := `INSERT INTO bookings(id, user_id, room_id, room_type, check_in, check_out, max_guests, total_amount, status, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
+	query := `INSERT INTO bookings(id, user_id, room_id, room_type, check_in, check_out, guests, total_amount, status, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 
 	//insert into db
 	_, err = tx.ExecContext(ctx, query,
