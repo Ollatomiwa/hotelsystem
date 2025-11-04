@@ -124,7 +124,7 @@ func (r *BookingRepository) GetAvailableRooms(ctx context.Context, req *models.A
 
 	for rows.Next() {
 		var room models.RoomAvailability
-		var PricePerNight float64
+		var pricePerNight float64
 
 		err := rows.Scan(
 			&room.RoomId,
@@ -137,8 +137,8 @@ func (r *BookingRepository) GetAvailableRooms(ctx context.Context, req *models.A
 			return nil, fmt.Errorf("failed to scan room: %w", err)
 		}
 
-		room.PricePerNight = PricePerNight
-		room.TotalPrice = PricePerNight * float64(nights)
+		room.PricePerNight = pricePerNight
+		room.TotalPrice =pricePerNight * float64(nights)
 		AvailableRooms = append(AvailableRooms, room)
 	}
 	return AvailableRooms, nil
