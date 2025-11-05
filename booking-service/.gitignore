@@ -1,0 +1,17 @@
+# Binaries
+notification-service
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# Environment files
+.env
+.env.local

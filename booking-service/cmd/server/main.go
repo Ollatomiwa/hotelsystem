@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ollatomiwa/hotelsystem/booking-service/internal/handlers"
@@ -9,6 +11,7 @@ import (
 	"github.com/ollatomiwa/hotelsystem/booking-service/internal/services"
 	"github.com/ollatomiwa/hotelsystem/booking-service/pkg/config"
 	"github.com/ollatomiwa/hotelsystem/booking-service/pkg/database"
+	"github.com/ollatomiwa/hotelsystem/booking-service/pkg/notifications"
 )
 
 func main() {
@@ -45,8 +48,27 @@ func main() {
 	bookingRepo := postgres.NewBookingRepository(db)
 	roomRepo := postgres.NewRoomRepository(db)
 
+	// Initialize notification client
+	notifyClient := notifications.NewClient(cfg.Notifications.BaseURL)
+	
+	// Check notification service health
+	if cfg.Notifications.Enabled {
+		log.Printf("🔔 Checking notification service health...")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		
+		if err := notifyClient.HealthCheck(ctx); err != nil {
+			log.Printf("⚠️  Notification service health check failed: %v", err)
+			log.Printf("⚠️  Continuing without notifications...")
+			cfg.Notifications.Enabled = false
+		} else {
+			log.Printf("✅ Notification service is healthy!")
+		}
+	}
+
 	// Initialize services
-	bookingService := services.NewBookingService(bookingRepo, roomRepo)
+	bookingService := services.NewBookingService(bookingRepo, roomRepo, notifyClient,
+		cfg.Notifications.Enabled)
 
 	// Create Gin router
 	router := gin.Default()

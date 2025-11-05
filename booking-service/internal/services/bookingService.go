@@ -8,17 +8,23 @@ import (
 	"github.com/google/uuid"
 	"github.com/ollatomiwa/hotelsystem/booking-service/internal/models"
 	"github.com/ollatomiwa/hotelsystem/booking-service/internal/repositories"
+	"github.com/ollatomiwa/hotelsystem/booking-service/pkg/notifications"
 )
 type BookingService struct {
 	bookingRepo repositories.BookingRepository
 	roomRepo    repositories.RoomRepository
+	notifyClient *notifications.Client
+	notificationsEnabled bool
 }
 
 // Change to accept interfaces
-func NewBookingService(bookingRepo repositories.BookingRepository, roomRepo repositories.RoomRepository) *BookingService {
+func NewBookingService(bookingRepo repositories.BookingRepository, roomRepo repositories.RoomRepository,notifyClient *notifications.Client,
+	notificationsEnabled bool, ) *BookingService {
 	return &BookingService{
 		bookingRepo: bookingRepo,
 		roomRepo:    roomRepo,
+		notifyClient: notifyClient,
+		notificationsEnabled: notificationsEnabled,
 	}
 }
 
@@ -98,7 +104,7 @@ func (s *BookingService) CreateBooking(ctx context.Context, req *models.BookingR
 		RoomType:    room.RoomType,
 		CheckIn:     checkIn,
 		CheckOut:    checkOut,
-        Guest:      req.Guests, // ADDED: Missing field
+        Guest:      req.Guests, 
 		TotalAmount: totalAmount,
 		Status:      models.StatusConfirmed,
 		CreatedAt:   time.Now(),
@@ -110,6 +116,12 @@ func (s *BookingService) CreateBooking(ctx context.Context, req *models.BookingR
 	if err != nil {
 		return nil, fmt.Errorf("failed to create booking: %w", err)
 	}
+
+	// Send notification (async - don't block the response)
+	if s.notificationsEnabled {
+		go s.sendBookingConfirmation(context.Background(), booking, room)
+	}	
+
 	return booking, nil
 }
 
@@ -144,10 +156,59 @@ func (s *BookingService) CancelBooking(ctx context.Context, id string) error {
 		return fmt.Errorf("booking can only be canceled at least 24 hours before check in")
 	}
 
+	// Get room details for notification
+	room, err := s.roomRepo.GetRoomById(ctx, booking.RoomId)
+	if err != nil {
+		return fmt.Errorf("failed to get room details: %w", err)
+	}
+
 	// Now we updates status
 	err = s.bookingRepo.UpdateBookingStatus(ctx, id, models.StatusCancelled)
 	if err != nil {
 		return fmt.Errorf("failed to cancel booking: %w", err)
 	}
+
+	// Send cancellation notification (async)
+	if s.notificationsEnabled {
+		go s.sendBookingCancellation(context.Background(), booking, room)
+	}
+
 	return nil
+}
+
+// sendBookingConfirmation sends a confirmation notification
+func (s *BookingService) sendBookingConfirmation(ctx context.Context, booking *models.Booking, room *models.Room) {
+	bookingData := map[string]interface{}{
+		"booking_id":      booking.Id,
+		"room_number":     room.RoomNumber,
+		"room_type":       string(room.RoomType),
+		"check_in":        booking.CheckIn.Format("2006-01-02"),
+		"check_out":       booking.CheckOut.Format("2006-01-02"),
+		"total_amount":    booking.TotalAmount,
+		"guests":          booking.Guest,
+		"booking_date":    booking.CreatedAt.Format("2006-01-02"),
+	}
+
+	if err := s.notifyClient.SendBookingConfirmation(ctx, booking.UserId, bookingData); err != nil {
+		// Log error but don't fail the booking
+		fmt.Printf("Failed to send booking confirmation: %v\n", err)
+	}
+}
+
+// sendBookingCancellation sends a cancellation notification
+func (s *BookingService) sendBookingCancellation(ctx context.Context, booking *models.Booking, room *models.Room) {
+	bookingData := map[string]interface{}{
+		"booking_id":      booking.Id,
+		"room_number":     room.RoomNumber,
+		"room_type":       string(room.RoomType),
+		"check_in":        booking.CheckIn.Format("2006-01-02"),
+		"check_out":       booking.CheckOut.Format("2006-01-02"),
+		"total_amount":    booking.TotalAmount,
+		"cancellation_date": time.Now().Format("2006-01-02"),
+	}
+
+	if err := s.notifyClient.SendBookingCancellation(ctx, booking.UserId, bookingData); err != nil {
+		// Log error but don't fail the cancellation
+		fmt.Printf("Failed to send booking cancellation: %v\n", err)
+	}
 }

@@ -8,6 +8,7 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
+	Notifications NotificationsConfig
 }
 
 type ServerConfig struct {
@@ -24,6 +25,11 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
+type NotificationsConfig struct {
+	BaseURL string
+	Enabled bool
+}
+
 func Load() *Config {
 	return &Config{
 		Server: ServerConfig{
@@ -37,6 +43,10 @@ func Load() *Config {
 			Password: getEnv("DB_PASSWORD", "password"),
 			DBName:   getEnv("DB_NAME", "booking_service"),
 			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
+		},
+		Notifications: NotificationsConfig{
+			BaseURL: getEnv("NOTIFICATION_SERVICE_URL", "http://localhost:8081"),
+			Enabled: getEnvBool("NOTIFICATIONS_ENABLED", true),
 		},
 	}
 }
@@ -52,6 +62,14 @@ func getEnvInt(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if intValue, err := strconv.Atoi(value); err == nil {
 			return intValue
+		}
+	}
+	return defaultValue
+}
+func getEnvBool(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if boolValue, err := strconv.ParseBool(value); err == nil {
+			return boolValue
 		}
 	}
 	return defaultValue
