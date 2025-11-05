@@ -34,9 +34,9 @@ func NewClient(baseURL string) *Client {
 }
 
 // SendBookingConfirmation sends a notification when a booking is confirmed
-func (c *Client) SendBookingConfirmation(ctx context.Context, userId string, bookingData map[string]interface{}) error {
+func (c *Client) SendBookingConfirmation(ctx context.Context, userEmail string, bookingData map[string]interface{}) error {
 	// For now, use userID as email. In production, we will look up the user's email
-	email := userId + "@example.com" 
+	email := userEmail 
 	
 	subject := "Booking Confirmed!"
 	body := fmt.Sprintf(

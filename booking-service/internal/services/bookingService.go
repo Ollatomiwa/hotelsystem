@@ -119,7 +119,7 @@ func (s *BookingService) CreateBooking(ctx context.Context, req *models.BookingR
 
 	// Send notification (async - don't block the response)
 	if s.notificationsEnabled {
-		go s.sendBookingConfirmation(context.Background(), booking, room)
+		go s.sendBookingConfirmation(context.Background(), booking, room, req.UserEmail)
 	}	
 
 	return booking, nil
@@ -177,7 +177,7 @@ func (s *BookingService) CancelBooking(ctx context.Context, id string) error {
 }
 
 // sendBookingConfirmation sends a confirmation notification
-func (s *BookingService) sendBookingConfirmation(ctx context.Context, booking *models.Booking, room *models.Room) {
+func (s *BookingService) sendBookingConfirmation(ctx context.Context, booking *models.Booking, room *models.Room, userEmail string) {
 	bookingData := map[string]interface{}{
 		"booking_id":      booking.Id,
 		"room_number":     room.RoomNumber,
@@ -189,7 +189,7 @@ func (s *BookingService) sendBookingConfirmation(ctx context.Context, booking *m
 		"booking_date":    booking.CreatedAt.Format("2006-01-02"),
 	}
 
-	if err := s.notifyClient.SendBookingConfirmation(ctx, booking.UserId, bookingData); err != nil {
+	if err := s.notifyClient.SendBookingConfirmation(ctx, userEmail, bookingData); err != nil {
 		// Log error but don't fail the booking
 		fmt.Printf("Failed to send booking confirmation: %v\n", err)
 	}

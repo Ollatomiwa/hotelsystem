@@ -49,6 +49,7 @@ type Room struct {
 //createbooking request represents the payload for creating a booking
 type BookingRequest struct {
 	UserId string `json:"user_id" binding:"required"`
+	UserEmail string `json:"user_email" binding:"required,email"`
 	RoomId string `json:"room_id" binding:"required"`
 	CheckIn string `json:"check_in" binding:"required"`
 	CheckOut string `json:"check_out" binding:"required"`
