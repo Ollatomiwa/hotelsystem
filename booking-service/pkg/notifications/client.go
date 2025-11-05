@@ -66,9 +66,9 @@ func (c *Client) SendBookingConfirmation(ctx context.Context, userEmail string, 
 }
 
 // SendBookingCancellation sends a notification when a booking is cancelled
-func (c *Client) SendBookingCancellation(ctx context.Context, userId string, bookingData map[string]interface{}) error {
+func (c *Client) SendBookingCancellation(ctx context.Context, userEmail string, bookingData map[string]interface{}) error {
 	// For now, use userID as email. In production, you'd look up the user's email
-	email := userId + "@example.com"
+	email := userEmail
 	
 	subject := " Booking Cancelled"
 	body := fmt.Sprintf(
@@ -94,7 +94,7 @@ func (c *Client) SendBookingCancellation(ctx context.Context, userId string, boo
 }
 
 func (c *Client) sendEmailNotification(ctx context.Context, req SendEmailRequest) error {
-	url := c.baseURL + "/api/v1/notifications/email"
+	url := "https://notification-services.up.railway.app/api/v1/notifications/email"
 
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -132,7 +132,7 @@ func (c *Client) sendEmailNotification(ctx context.Context, req SendEmailRequest
 
 // HealthCheck verifies the notification service is reachable
 func (c *Client) HealthCheck(ctx context.Context) error {
-	url := c.baseURL + "/api/v1/notifications/email"
+	url :=  "https://notification-services.up.railway.app//api/v1/notifications/email"
 	
 	// Send a minimal test email request
 	testReq := SendEmailRequest{
