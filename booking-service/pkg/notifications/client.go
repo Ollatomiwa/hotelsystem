@@ -34,9 +34,9 @@ func NewClient(baseURL string) *Client {
 }
 
 // SendBookingConfirmation sends a notification when a booking is confirmed
-func (c *Client) SendBookingConfirmation(ctx context.Context, userID string, bookingData map[string]interface{}) error {
-	// For now, use userID as email. In production, you'd look up the user's email
-	email := userID + "@example.com" // Temporary - replace with actual email lookup
+func (c *Client) SendBookingConfirmation(ctx context.Context, userId string, bookingData map[string]interface{}) error {
+	// For now, use userID as email. In production, we will look up the user's email
+	email := userId + "@example.com" 
 	
 	subject := "Booking Confirmed!"
 	body := fmt.Sprintf(
@@ -68,7 +68,7 @@ func (c *Client) SendBookingConfirmation(ctx context.Context, userID string, boo
 // SendBookingCancellation sends a notification when a booking is cancelled
 func (c *Client) SendBookingCancellation(ctx context.Context, userID string, bookingData map[string]interface{}) error {
 	// For now, use userID as email. In production, you'd look up the user's email
-	email := userID + "@example.com" // Temporary - replace with actual email lookup
+	email := userID + "@example.com"
 	
 	subject := " Booking Cancelled"
 	body := fmt.Sprintf(
