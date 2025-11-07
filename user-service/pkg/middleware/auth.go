@@ -39,6 +39,7 @@ func AuthMiddleware(jwtManager *security.JWTManager) (gin.HandlerFunc) {
 		//set user info in context
 		c.Set("userId", claims.UserId)
 		c.Set("userRole", claims.Role)
+		c.Set("userEmail", claims.UserId)//temporary - replace later with actual email lookup
 
 		c.Next()
 	

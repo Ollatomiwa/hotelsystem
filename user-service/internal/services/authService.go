@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ollatomiwa/hotelsystem/user-service/internal/models"
-	"github.com/ollatomiwa/hotelsystem/user-service/internal/repositories"
+	"github.com/ollatomiwa/hotelsystem/user-service/internal/repositories/postgres"
 	"github.com/ollatomiwa/hotelsystem/user-service/pkg/security"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -14,11 +14,11 @@ import (
 )
 
 type AuthService struct {
-	userRepo repositories.UserRepository
+	userRepo postgres.UserRepository
 	security *security.JWTManager
 }
 
-func NewAuthService(userRepo repositories.UserRepository, security *security.JWTManager ) *AuthService{
+func NewAuthService(userRepo postgres.UserRepository, security *security.JWTManager ) *AuthService{
 	return &AuthService {
 		userRepo: userRepo,
 		security: security,
