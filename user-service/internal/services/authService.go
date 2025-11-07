@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"gihub.com/ollatomiwa/hotelsystem/user-service/internal/models"
-	"gihub.com/ollatomiwa/hotelsystem/user-service/internal/repositories"
-	"gihub.com/ollatomiwa/hotelsystem/user-service/pkg/security"
+	"github.com/ollatomiwa/hotelsystem/user-service/internal/models"
+	"github.com/ollatomiwa/hotelsystem/user-service/internal/repositories"
+	"github.com/ollatomiwa/hotelsystem/user-service/pkg/security"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 

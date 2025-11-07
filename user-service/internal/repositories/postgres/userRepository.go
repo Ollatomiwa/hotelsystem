@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"gihub.com/ollatomiwa/hotelsystem/user-service/internal/models"
+	"github.com/ollatomiwa/hotelsystem/user-service/internal/models"
 	"github.com/lib/pq"
 )
 
