@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"time"
 
 	"github.com/ollatomiwa/hotelsystem/user-service/internal/handlers"
 	"github.com/ollatomiwa/hotelsystem/user-service/pkg/config"
@@ -41,7 +40,7 @@ func main() {
 		log.Fatal("failed to initialize database schema:",err)
 	}
 
-	jwtManager := security.JWTManager(
+	jwtManager := security.NewJWTManager(
 		cfg.Security.JWTSecretKey,
 		cfg.Security.JWTRefreshKey,
 		cfg.Security.AccessTokenDuration,
@@ -58,8 +57,9 @@ func main() {
 	log.Printf("user service starting on port %s", cfg.Server.Port)
 	log.Printf("Environment: %s", cfg.Server.Env)
 	log.Printf("JWT Acess DUration: %v", cfg.Security.AccessTokenDuration)
+	log.Printf("🔐 JWT Refresh Duration: %v", cfg.Security.RefreshToken)
 
-	addres := ":" + cfg.Server.Port
+	address := ":" + cfg.Server.Port
 	if err := router.Run(address); err != nil {
 		log.Fatal("failed to start server:", err)
 	}
