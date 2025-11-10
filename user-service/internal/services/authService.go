@@ -14,11 +14,11 @@ import (
 )
 
 type AuthService struct {
-	userRepo postgres.UserRepository
+	userRepo *postgres.UserRepository
 	security *security.JWTManager
 }
 
-func NewAuthService(userRepo postgres.UserRepository, security *security.JWTManager ) *AuthService{
+func NewAuthService(userRepo *postgres.UserRepository, security *security.JWTManager ) *AuthService{
 	return &AuthService {
 		userRepo: userRepo,
 		security: security,
