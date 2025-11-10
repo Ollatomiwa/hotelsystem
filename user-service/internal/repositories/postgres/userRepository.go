@@ -37,7 +37,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) erro
 
 func (r *UserRepository) GetUserByEmail(ctx context.Context, email string)(*models.User, error) {
 	query := `
-		SELECT id, email, firstName, lastName, role, 
+		SELECT id, email, firstName, lastName, role 
 		FROM Users
 		WHERE email = $1
 	`
@@ -62,7 +62,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string)(*mode
 
 func (r *UserRepository) GetUserByEmailAuth(ctx context.Context, email string)(*models.User, error) {
 	query := `
-		SELECT id, email, passwordHash, firstName, lastName, phone, role, 
+		SELECT id, email, passwordHash, firstName, lastName, phone, role 
 		FROM Users
 		WHERE email = $1
 	`
@@ -88,7 +88,7 @@ func (r *UserRepository) GetUserByEmailAuth(ctx context.Context, email string)(*
 }
 
 func (r *UserRepository) UpdateUser(ctx context.Context, user *models.User) error {
-	query := `UPDATE users SET firstName = $1, lastName = $2, phone = $3 WHERE email = %4`
+	query := `UPDATE users SET firstName = $1, lastName = $2, phone = $3 WHERE email = $4`
 
 	_, err := r.db.ExecContext(ctx, query, user.FirstName, user.LastName, user.Phone, user.Email,)
 	if err != nil {

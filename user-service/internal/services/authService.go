@@ -145,3 +145,32 @@ func (s *AuthService) ChangePassword(ctx context.Context, email string, req *mod
 
 	return nil
 }
+
+func (s *AuthService) RefreshToken(ctx context.Context, email, refreshToken string) (*models.LoginResponse, error) {
+    _, err := s.security.VerifyRefreshToken(refreshToken)
+    if err != nil {
+        return nil, errors.New("invalid refresh token")
+    }
+
+    user, err := s.userRepo.GetUserByEmail(ctx, email)
+    if err != nil {
+        return nil, errors.New("user not found")
+    }
+
+    accessToken, err := s.security.GenerateAccessToken(user.Id, string(user.Role))
+    if err != nil {
+        return nil, fmt.Errorf("failed to generate access token: %w", err)
+    }
+
+    newRefreshToken, err := s.security.GenerateRefreshToken(user.Email)
+    if err != nil {
+        return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+    }
+
+    user.PasswordHash = ""
+    return &models.LoginResponse{
+        AccessToken:  accessToken,
+        RefreshToken: newRefreshToken,
+        User:         *user,
+    }, nil
+}

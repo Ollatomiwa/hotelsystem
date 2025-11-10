@@ -25,7 +25,7 @@ func SetupRoutes(router *gin.Engine, authService *services.AuthService, jwtManag
 		//auth routes - public
 		auth := v1.Group("/auth")
 		{
-			auth.POST("/reigister", AuthHandler.Register)
+			auth.POST("/register", AuthHandler.Register)
 			auth.POST("/login", AuthHandler.Login)
 			auth.POST("/refresh", AuthHandler.RefreshToken)
 		}
