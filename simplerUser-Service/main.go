@@ -69,8 +69,8 @@ func login(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid username or password", er)
 		return 
 	}
-	sessionToken := generateToken(32)
-	csrfToken := generateToken(32)
+	sessionToken := generateToken(6)
+	csrfToken := generateToken(6)
 
 	http.SetCookie(w, &http.Cookie{
 		Name: "session_token",
