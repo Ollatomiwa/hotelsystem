@@ -37,7 +37,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) erro
 
 func (r *UserRepository) GetUserByEmail(ctx context.Context, userId string)(*models.User, error) {
 	query := `
-		SELECT id, email, firstName, lastName, role 
+		SELECT id, email, first_name, last_name, role 
 		FROM Users
 		WHERE email = $1
 	`
