@@ -16,12 +16,15 @@ import (
 type AuthService struct {
 	userRepo *postgres.UserRepository
 	security *security.JWTManager
+	bcryptCost int
 }
 
-func NewAuthService(userRepo *postgres.UserRepository, security *security.JWTManager ) *AuthService{
+func NewAuthService(userRepo *postgres.UserRepository, security *security.JWTManager, bcryptCost int ) *AuthService{
 	return &AuthService {
 		userRepo: userRepo,
 		security: security,
+		bcryptCost: bcryptCost,
+		
 	}
 }
 
@@ -31,7 +34,7 @@ func (s *AuthService) Register(ctx context.Context, req *models.CreateUserReques
 		return nil, errors.New("user with this email already exists")
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password),bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password),s.bcryptCost)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -146,13 +149,13 @@ func (s *AuthService) ChangePassword(ctx context.Context, email string, req *mod
 	return nil
 }
 
-func (s *AuthService) RefreshToken(ctx context.Context, email, refreshToken string) (*models.LoginResponse, error) {
-    _, err := s.security.VerifyRefreshToken(refreshToken)
+func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*models.LoginResponse, error) {
+    claims, err := s.security.VerifyRefreshToken(refreshToken)
     if err != nil {
         return nil, errors.New("invalid refresh token")
     }
 
-    user, err := s.userRepo.GetUserByEmail(ctx, email)
+    user, err := s.userRepo.GetUserById(ctx, claims.UserId) 
     if err != nil {
         return nil, errors.New("user not found")
     }
@@ -162,7 +165,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, email, refreshToken stri
         return nil, fmt.Errorf("failed to generate access token: %w", err)
     }
 
-    newRefreshToken, err := s.security.GenerateRefreshToken(user.Email)
+    newRefreshToken, err := s.security.GenerateRefreshToken(user.Id)
     if err != nil {
         return nil, fmt.Errorf("failed to generate refresh token: %w", err)
     }

@@ -52,5 +52,5 @@ type ChangePasswordRequest struct {
 }
 
 type RefreshTokenRequest struct {
-	RefreshToken string `json:"refreshTokem" binding:"required"`
+	RefreshToken string `json:"refreshToken" binding:"required"`
 }

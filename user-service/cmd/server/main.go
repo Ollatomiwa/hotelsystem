@@ -48,7 +48,7 @@ func main() {
 	)
 
 	userRepo := postgres.NewUserRepository(db)
-	authService := services.NewAuthService(userRepo, jwtManager)
+	authService := services.NewAuthService(userRepo, jwtManager,cfg.Security.BCryptCost)
 
 	router := gin.Default()
 
@@ -56,7 +56,7 @@ func main() {
 
 	log.Printf("user service starting on port %s", cfg.Server.Port)
 	log.Printf("Environment: %s", cfg.Server.Env)
-	log.Printf("JWT Acess DUration: %v", cfg.Security.AccessTokenDuration)
+	log.Printf("JWT Acess Duration: %v", cfg.Security.AccessTokenDuration)
 	log.Printf("JWT Refresh Duration: %v", cfg.Security.RefreshToken)
 
 	address := ":" + cfg.Server.Port

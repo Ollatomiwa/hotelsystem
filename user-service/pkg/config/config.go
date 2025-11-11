@@ -3,8 +3,10 @@ package config
 import (
 	"os"
 	"strconv"
-	"time"
 	"strings"
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Config struct {
@@ -70,7 +72,7 @@ func Load() *Config {
 			JWTRefreshKey: getEnv("JWT_REFRESH_KEY", "refrsh-token"),
 			AccessTokenDuration: getEnvDuration("ACCESS_TOKEN_DURATION", 15*time.Minute),
 			RefreshToken: getEnvDuration("REFRESH_TOKEN", 7*24*time.Hour),
-			BCryptCost: getEnvInt("BCRYPT_COST", 12),
+			BCryptCost: getEnvInt("BCRYPT_COST", bcrypt.DefaultCost),
 			CORSAllowedOrigins: getEnvSlice("CORS_ALLOWED_ORIGINS", []string{"http://localhost:3000"}),
 			CSRFSecret: getEnv("CSRF_SECRET", "scfr-key"),
 			RateLimitRequests: getEnvInt("RATE_LIMIT_REQUESTS", 100),

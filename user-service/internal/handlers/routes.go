@@ -22,15 +22,16 @@ func SetupRoutes(router *gin.Engine, authService *services.AuthService, jwtManag
 
 	v1 := router.Group("/api/v1")
 	{
-		//auth routes - public
+		// Auth routes - public
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/register", AuthHandler.Register)
 			auth.POST("/login", AuthHandler.Login)
 			auth.POST("/refresh", AuthHandler.RefreshToken)
+			// Client will handle logout by removing tokens
 		}
 
-		//user routes- protected
+		// User routes - protected
 		users := v1.Group("/users")	
 		users.Use(middleware.AuthMiddleware(jwtManager))
 		{
@@ -39,12 +40,12 @@ func SetupRoutes(router *gin.Engine, authService *services.AuthService, jwtManag
 			users.PUT("/change-password", AuthHandler.ChangePassword)
 		}
 
-		//admin routes - protected + admin role
+		// Admin routes - protected + admin role
 		admin := v1.Group("/admin")
 		admin.Use(middleware.AuthMiddleware(jwtManager))
 		admin.Use(middleware.RoleMiddleware("admin"))
 		{
-			admin.Group("/Users", func(c *gin.Context) {
+			admin.GET("/users", func(c *gin.Context) {
 				c.JSON(http.StatusOK, gin.H{"message": "Admin access granted"})
 			})
 		}

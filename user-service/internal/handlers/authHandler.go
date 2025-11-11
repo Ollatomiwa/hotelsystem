@@ -37,13 +37,13 @@ func (h *AuthHandler) Register(c *gin.Context){
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req models.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload" + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload: " + err.Error()})
 		return 
 	}	
 
 	response, err := h.authService.Login(c.Request.Context(), &req)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "authenctication failed" + err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication failed: " + err.Error()})
 		return 
 	}
 	c.JSON(http.StatusOK, response)
@@ -113,5 +113,11 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return 
 	}
 
-	c.JSON(http.StatusNotImplemented, nil)
+	response, err := h.authService.RefreshToken(c.Request.Context(), req.RefreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh failed: " + err.Error()})
+		return 
+	}
+	
+	c.JSON(http.StatusOK, response)
 }
