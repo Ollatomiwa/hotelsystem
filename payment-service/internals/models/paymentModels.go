@@ -1,41 +1,150 @@
-package models
+package repository
 
 import (
-	"time"
+	"github.com/ollatomiwa/hotel-system/payment-service/internal/models"
 
-	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
-type Payment struct {
-	Id 	uuid.UUID `json:"id" db:"id"`
-	BookingId uuid.UUID `json:"booking_id" db:"booking_id"`
-	UserId uuid.UUID `json:"user_id" db:"user_id"`
-	Amount float64 `json:"amount" db:"amount"`
-	Currency string `json:"currency" db:"currency"`
-	Status string `json:"status" db:"status"`
-	PaymentMethod string `json:"payment_method" db:"paymeny_method"`
-	PaymentProvider string `json:"payment_provider" db:"payment_provider"`
-	ProviderTransaction_Id string `json:"provider_transaction_id" db:"provider_transaction_id"`
-	Metadata string `json:"metadata" db:"metadata"`
-	CreatedAt time.Time `json:"created_at" db:"creates_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+type Repository struct {
+	db *gorm.DB
 }
 
-type CreatePaymentRequest struct {
-	BookingId uuid.UUID `json:"booking_id" binding:"required"`
-	UserId uuid.UUID `json:"user_id" binding:"required"`
-	Amount float64 `json:"amount" binding:"required,gt=0"`
-	Currency string `json:"currency" binding:"required"`
-	PaymentMethod string `json:"payment_method" binding:"required"`
-	PaymentProvider string `json:"payment_provider" binding:"required"`
+func New(db *gorm.DB) *Repository {
+	return &Repository{db: db}
 }
 
-type PaymentResponse struct {
-	Id 	uuid.UUID `json:"id" `
-	BookingId uuid.UUID `json:"booking_id"`
-	User_d uuid.UUID `json:"user_id"`
-	Amount float64 `json:"amount"`
-	Currency string `json:"currency"`
-	Status string `json:"status"`
-	PaymentMethod string `json:"payment_method"`
+// Transaction Repository Methods
+
+func (r *Repository) CreateTransaction(tx *models.Transaction) error {
+	return r.db.Create(tx).Error
+}
+
+func (r *Repository) GetTransactionByID(id uint) (*models.Transaction, error) {
+	var tx models.Transaction
+	err := r.db.First(&tx, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &tx, nil
+}
+
+func (r *Repository) GetTransactionByReference(ref string) (*models.Transaction, error) {
+	var tx models.Transaction
+	err := r.db.Where("reference = ?", ref).First(&tx).Error
+	if err != nil {
+		return nil, err
+	}
+	return &tx, nil
+}
+
+func (r *Repository) GetTransactionByIdempotencyKey(key string) (*models.Transaction, error) {
+	var tx models.Transaction
+	err := r.db.Where("idempotency_key = ?", key).First(&tx).Error
+	if err != nil {
+		return nil, err
+	}
+	return &tx, nil
+}
+
+func (r *Repository) UpdateTransaction(tx *models.Transaction) error {
+	return r.db.Save(tx).Error
+}
+
+func (r *Repository) ListTransactions(page, pageSize int, status string, email string) ([]models.Transaction, int64, error) {
+	var transactions []models.Transaction
+	var total int64
+
+	query := r.db.Model(&models.Transaction{})
+
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+	if email != "" {
+		query = query.Where("customer_email = ?", email)
+	}
+
+	// Get total count
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	offset := (page - 1) * pageSize
+	err := query.Order("created_at DESC").
+		Limit(pageSize).
+		Offset(offset).
+		Find(&transactions).Error
+
+	return transactions, total, err
+}
+
+// Customer Repository Methods
+
+func (r *Repository) CreateCustomer(customer *models.Customer) error {
+	return r.db.Create(customer).Error
+}
+
+func (r *Repository) GetCustomerByEmail(email string) (*models.Customer, error) {
+	var customer models.Customer
+	err := r.db.Where("email = ?", email).First(&customer).Error
+	if err != nil {
+		return nil, err
+	}
+	return &customer, nil
+}
+
+func (r *Repository) UpdateCustomer(customer *models.Customer) error {
+	return r.db.Save(customer).Error
+}
+
+func (r *Repository) GetOrCreateCustomer(email, name string) (*models.Customer, error) {
+	customer, err := r.GetCustomerByEmail(email)
+	if err == nil {
+		return customer, nil
+	}
+
+	if err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	// Create new customer
+	customer = &models.Customer{
+		Email: email,
+		Name:  name,
+	}
+	if err := r.CreateCustomer(customer); err != nil {
+		return nil, err
+	}
+	return customer, nil
+}
+
+// Webhook Repository Methods
+
+func (r *Repository) CreateWebhook(webhook *models.Webhook) error {
+	return r.db.Create(webhook).Error
+}
+
+func (r *Repository) GetWebhookByID(id uint) (*models.Webhook, error) {
+	var webhook models.Webhook
+	err := r.db.First(&webhook, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &webhook, nil
+}
+
+func (r *Repository) MarkWebhookProcessed(id uint) error {
+	return r.db.Model(&models.Webhook{}).
+		Where("id = ?", id).
+		Update("processed", true).Error
+}
+
+func (r *Repository) GetUnprocessedWebhooks(limit int) ([]models.Webhook, error) {
+	var webhooks []models.Webhook
+	err := r.db.Where("processed = ?", false).
+		Order("created_at ASC").
+		Limit(limit).
+		Find(&webhooks).Error
+	return webhooks, err
 }
