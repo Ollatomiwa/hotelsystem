@@ -2,8 +2,8 @@ package router
 
 import (
 	"github.com/ollatomiwa/hotelsystem/payment-service/config"
-	"github.com/ollatomiwa/hotelsystem/payment-service/internal/handlers"
-	"github.com/ollatomiwa/hotelsystem/payment-service/internal/middleware"
+	"github.com/ollatomiwa/hotelsystem/payment-service/internals/handlers"
+	"github.com/ollatomiwa/hotelsystem/payment-service/internals/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"

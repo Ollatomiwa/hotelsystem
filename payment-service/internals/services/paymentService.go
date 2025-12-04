@@ -3,8 +3,8 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"payment-service/internal/models"
-	"payment-service/internal/repository"
+	"github.com/ollatomiwa/hotelsystem/payment-service/internals/models"
+	"github.com.ollatomiwa/hotelsystem/payment-service/internals/repository"
 	"payment-service/pkg/paystack"
 
 	"github.com/google/uuid"

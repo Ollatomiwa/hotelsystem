@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"payment-service/internal/models"
+	"github.com/ollatomiwa/hotelsystem/payment-service/internals/models"
 	"time"
 
 	"github.com/sirupsen/logrus"

@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/ollatomiwa/hotel-system/payment-service/internal/models"
+	"github.com/ollatomiwa/hotelsystem/payment-service/internal/models"
 
 	"gorm.io/gorm"
 )

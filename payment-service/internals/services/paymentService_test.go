@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/ollatomiwa/hotelsystem/payment-service/internal/models"
+	"github.com/ollatomiwa/hotelsystem/payment-service/internals/models"
 	"testing"
 )
 

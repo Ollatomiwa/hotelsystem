@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"net/http"
-	"github.com/ollatomiwa/hotelsystem/payment-service/internal/models"
+	"github.com/ollatomiwa/hotelsystem/payment-service/internals/models"
 	"github.com/ollatomiwa/hotelsystem/payment-service/pkg/database"
 
 	"github.com/gin-gonic/gin"

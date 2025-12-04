@@ -5,8 +5,8 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"github.com/ollatomiwa/hotelsystem/payment-service/internal/models"
-	"github.com/ollatomiwa/hotelsystem/payment-service/internal/service"
+	"github.com/ollatomiwa/hotelsystem/payment-service/internals/models"
+	"github.com/ollatomiwa/hotelsystem/payment-service/internals/service"
 	"github.com/ollatomiwa/hotelsystem/payment-service/pkg/paystack"
 	"strconv"
 
